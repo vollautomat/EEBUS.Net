@@ -96,17 +96,6 @@ namespace EEBUS
 
             app.UseMiddleware<SHIPMiddleware>();
 
-			// configure our EEBUS mDNS properties
-			mDNSService.AddProperty("name", "C# EEBUS Demo");
-			mDNSService.AddProperty("id", "ID:Demo-CSharp-987654321;");
-            mDNSService.AddProperty("path", "/ship/");
-            mDNSService.AddProperty("register", "true");
-			mDNSService.AddProperty("ski", "9d15806e0dea56ae0406328fa712ec6d4404a927");
-			mDNSService.AddProperty("brand", "so-oftware");
-			mDNSService.AddProperty("type", "demo");
-			mDNSService.AddProperty("model", "C# Tester");
-            mDNSService.AddProperty("serial", "987654321");
-
 			// start our mDNS services
 			mDNSClient.Run();
             mDNSService.Run();

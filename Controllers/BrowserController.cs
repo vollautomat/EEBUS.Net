@@ -9,7 +9,6 @@ namespace EEBUS.Controllers
     using System.Net;
     using System.Net.Security;
     using System.Net.WebSockets;
-	using System.Security.Cryptography;
 	using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Threading;
@@ -18,26 +17,17 @@ namespace EEBUS.Controllers
     public class BrowserController : Controller
     {
         private readonly MDNSClient _mDNSClient;
-        private static ClientWebSocket _wsClient;
-        private static X509Certificate2 cert;
+		private readonly MDNSService _mDNSService;
+		private static ClientWebSocket _wsClient;
 
 		private ServerNode _model = new ServerNode();
 
-        public BrowserController(MDNSClient mDNSClient)
+        public BrowserController(MDNSClient mDNSClient, MDNSService mDNSService)
         {
             _mDNSClient = mDNSClient;
+            _mDNSService = mDNSService;
 
-            if (null == cert)
-                cert = CertificateGenerator.GenerateCert(Dns.GetHostName());
-
-			byte[] hash = SHA1.Create().ComputeHash(cert.GetPublicKey());
-			_model.LocalSKI = Convert.ToHexString(hash);
-			// add spaces every 4 hex digits (EEBUS requirement)
-			for (int i = 4; i < _model.LocalSKI.Length; i += 4)
-			{
-				_model.LocalSKI = _model.LocalSKI.Insert(i, " ");
-				i++;
-			}
+            _model.LocalSKI = _mDNSService.LocalSKI;
 		}
 
 		public IActionResult Index()
@@ -97,7 +87,7 @@ namespace EEBUS.Controllers
                 _wsClient = new ClientWebSocket();
                 _wsClient.Options.AddSubProtocol("ship");
                 _wsClient.Options.RemoteCertificateValidationCallback = ValidateServerCert;
-				_wsClient.Options.ClientCertificates.Add(cert);
+				_wsClient.Options.ClientCertificates.Add(_mDNSService.Cert);
                 await _wsClient.ConnectAsync(new Uri("wss://" + _model.Url), CancellationToken.None).ConfigureAwait(false);
                 
                 return View("Accept", _model);
