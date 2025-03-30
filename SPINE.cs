@@ -14,7 +14,7 @@ namespace EEBUS
             datagram.header = new SpineHeaderType();
             
             datagram.header.addressSource = new FeatureAddressType();
-            datagram.header.addressSource.device = "MICROSOFT-Azure-EEBUS-Gateway-100";
+            datagram.header.addressSource.device = "Demo-CSharp-987654321";
             datagram.header.addressSource.entity = new uint[1];
             datagram.header.addressSource.entity[0] = 0;
             datagram.header.addressSource.feature = 0;

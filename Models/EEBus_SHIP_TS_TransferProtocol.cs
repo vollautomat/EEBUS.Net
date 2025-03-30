@@ -8,6 +8,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
 // 
@@ -20,22 +22,22 @@ using System.Xml.Serialization;
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("connectionHello", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("connectionHello", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class ConnectionHelloType {
     
     private ConnectionHelloPhaseType phaseField;
     
     private uint waitingField;
     
-    private bool waitingFieldSpecified;
+    //private bool waitingFieldSpecified;
     
     private bool prolongationRequestField;
     
-    private bool prolongationRequestFieldSpecified;
-    
-    /// <remarks/>
-    public ConnectionHelloPhaseType phase {
+    //private bool prolongationRequestFieldSpecified;
+
+	/// <remarks/>
+	public ConnectionHelloPhaseType phase {
         get {
             return this.phaseField;
         }
@@ -54,16 +56,16 @@ public partial class ConnectionHelloType {
         }
     }
     
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIgnoreAttribute()]
-    public bool waitingSpecified {
-        get {
-            return this.waitingFieldSpecified;
-        }
-        set {
-            this.waitingFieldSpecified = value;
-        }
-    }
+    ///// <remarks/>
+    //[System.Xml.Serialization.XmlIgnoreAttribute()]
+    //public bool waitingSpecified {
+    //    get {
+    //        return this.waitingFieldSpecified;
+    //    }
+    //    set {
+    //        this.waitingFieldSpecified = value;
+    //    }
+    //}
     
     /// <remarks/>
     public bool prolongationRequest {
@@ -75,32 +77,33 @@ public partial class ConnectionHelloType {
         }
     }
     
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIgnoreAttribute()]
-    public bool prolongationRequestSpecified {
-        get {
-            return this.prolongationRequestFieldSpecified;
-        }
-        set {
-            this.prolongationRequestFieldSpecified = value;
-        }
-    }
+    ///// <remarks/>
+    //[System.Xml.Serialization.XmlIgnoreAttribute()]
+    //public bool prolongationRequestSpecified {
+    //    get {
+    //        return this.prolongationRequestFieldSpecified;
+    //    }
+    //    set {
+    //        this.prolongationRequestFieldSpecified = value;
+    //    }
+    //}
 }
 
 /// <remarks/>
 [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+[JsonConverter(typeof(StringEnumConverter))]
 public enum ConnectionHelloPhaseType {
-    
-    /// <remarks/>
-    pending,
-    
-    /// <remarks/>
-    ready,
-    
-    /// <remarks/>
-    aborted,
+
+	/// <remarks/>
+	pending,
+
+	/// <remarks/>
+	ready,
+
+	/// <remarks/>
+	aborted,
 }
 
 /// <remarks/>
@@ -108,7 +111,7 @@ public enum ConnectionHelloPhaseType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
 public partial class ExtensionType {
     
     private string extensionIdField;
@@ -128,7 +131,7 @@ public partial class ExtensionType {
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType="hexBinary")]
+    //[System.Xml.Serialization.XmlElementAttribute(DataType="hexBinary")]
     public byte[] binary {
         get {
             return this.binaryField;
@@ -154,7 +157,7 @@ public partial class ExtensionType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
 public partial class HeaderType {
     
     private string protocolIdField;
@@ -175,18 +178,18 @@ public partial class HeaderType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("messageProtocolHandshake", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("messageProtocolHandshake", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class MessageProtocolHandshakeType {
     
-    private ProtocolHandshakeTypeType handshakeTypeField;
+    private ProtocolHandshakeTypeType handshakeTypeField = new ProtocolHandshakeTypeType();
     
-    private MessageProtocolHandshakeTypeVersion versionField;
+    private MessageProtocolHandshakeTypeVersion versionField = new MessageProtocolHandshakeTypeVersion();
     
-    private string[] formatsField;
-    
-    /// <remarks/>
-    public ProtocolHandshakeTypeType handshakeType {
+    private MessageProtocolHandshakeTypeFormats formatsField = new MessageProtocolHandshakeTypeFormats();
+
+	/// <remarks/>
+	public ProtocolHandshakeTypeType handshakeType {
         get {
             return this.handshakeTypeField;
         }
@@ -206,8 +209,8 @@ public partial class MessageProtocolHandshakeType {
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlArrayItemAttribute("format", IsNullable=false)]
-    public string[] formats {
+    //[System.Xml.Serialization.XmlArrayItemAttribute("format", IsNullable=false)]
+    public MessageProtocolHandshakeTypeFormats formats {
         get {
             return this.formatsField;
         }
@@ -220,7 +223,8 @@ public partial class MessageProtocolHandshakeType {
 /// <remarks/>
 [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+[JsonConverter(typeof(StringEnumConverter))]
 public enum ProtocolHandshakeTypeType {
     
     /// <remarks/>
@@ -230,12 +234,35 @@ public enum ProtocolHandshakeTypeType {
     select,
 }
 
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
+[System.SerializableAttribute()]
+[System.Diagnostics.DebuggerStepThroughAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+//[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://docs.eebus.org/ship/xsd/v1")]
+public partial class MessageProtocolHandshakeTypeFormats
+{
+	private string[] formatField;
+
+	/// <remarks/>
+	public string[] format
+	{
+		get
+		{
+			return this.formatField;
+		}
+		set
+		{
+			this.formatField = value;
+		}
+	}
+}
+
 /// <remarks/>
 [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://docs.eebus.org/ship/xsd/v1")]
 public partial class MessageProtocolHandshakeTypeVersion {
     
     private ushort majorField;
@@ -268,8 +295,8 @@ public partial class MessageProtocolHandshakeTypeVersion {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("messageProtocolHandshakeError", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("messageProtocolHandshakeError", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class MessageProtocolHandshakeErrorType {
     
     private byte errorField;
@@ -290,13 +317,13 @@ public partial class MessageProtocolHandshakeErrorType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("connectionPinState", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("connectionPinState", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class ConnectionPinStateType {
     
     private PinStateType pinStateField;
     
-    private PinInputPermissionType inputPermissionField;
+    //private PinInputPermissionType inputPermissionField;
     
     private bool inputPermissionFieldSpecified;
     
@@ -309,24 +336,27 @@ public partial class ConnectionPinStateType {
             this.pinStateField = value;
         }
     }
-    
+
+    ///// <remarks/>
+    //public PinInputPermissionType inputPermission {
+    //    get {
+    //        return this.inputPermissionField;
+    //    }
+    //    set {
+    //        this.inputPermissionField = value;
+    //    }
+    //}
+
     /// <remarks/>
-    public PinInputPermissionType inputPermission {
-        get {
-            return this.inputPermissionField;
-        }
-        set {
-            this.inputPermissionField = value;
-        }
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIgnoreAttribute()]
-    public bool inputPermissionSpecified {
-        get {
+    //[System.Xml.Serialization.XmlIgnoreAttribute()]
+    public bool inputPermissionSpecified
+    {
+        get
+        {
             return this.inputPermissionFieldSpecified;
         }
-        set {
+        set
+        {
             this.inputPermissionFieldSpecified = value;
         }
     }
@@ -335,7 +365,8 @@ public partial class ConnectionPinStateType {
 /// <remarks/>
 [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+[JsonConverter(typeof(StringEnumConverter))]
 public enum PinStateType {
     
     /// <remarks/>
@@ -354,7 +385,8 @@ public enum PinStateType {
 /// <remarks/>
 [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+[JsonConverter(typeof(StringEnumConverter))]
 public enum PinInputPermissionType {
     
     /// <remarks/>
@@ -369,8 +401,8 @@ public enum PinInputPermissionType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("connectionPinInput", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("connectionPinInput", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class ConnectionPinInputType {
     
     private string pinField;
@@ -391,8 +423,8 @@ public partial class ConnectionPinInputType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("connectionPinError", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("connectionPinError", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class ConnectionPinErrorType {
     
     private byte errorField;
@@ -413,8 +445,8 @@ public partial class ConnectionPinErrorType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("data", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("data", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class DataType {
     
     private HeaderType headerField;
@@ -459,8 +491,8 @@ public partial class DataType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("connectionClose", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("connectionClose", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class ConnectionCloseType {
     
     private ConnectionClosePhaseType phaseField;
@@ -494,7 +526,7 @@ public partial class ConnectionCloseType {
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    //[System.Xml.Serialization.XmlIgnoreAttribute()]
     public bool maxTimeSpecified {
         get {
             return this.maxTimeFieldSpecified;
@@ -515,7 +547,7 @@ public partial class ConnectionCloseType {
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    //[System.Xml.Serialization.XmlIgnoreAttribute()]
     public bool reasonSpecified {
         get {
             return this.reasonFieldSpecified;
@@ -529,7 +561,8 @@ public partial class ConnectionCloseType {
 /// <remarks/>
 [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+[JsonConverter(typeof(StringEnumConverter))]
 public enum ConnectionClosePhaseType {
     
     /// <remarks/>
@@ -542,7 +575,8 @@ public enum ConnectionClosePhaseType {
 /// <remarks/>
 [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+[JsonConverter(typeof(StringEnumConverter))]
 public enum ConnectionCloseReasonType {
     
     /// <remarks/>
@@ -557,8 +591,8 @@ public enum ConnectionCloseReasonType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("accessMethodsRequest", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("accessMethodsRequest", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class AccessMethodsRequestType {
 }
 
@@ -567,8 +601,8 @@ public partial class AccessMethodsRequestType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
-[System.Xml.Serialization.XmlRootAttribute("accessMethods", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
+//[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlRootAttribute("accessMethods", Namespace="http://docs.eebus.org/ship/xsd/v1", IsNullable=false)]
 public partial class AccessMethodsType {
     
     private string idField;
@@ -613,7 +647,7 @@ public partial class AccessMethodsType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://docs.eebus.org/ship/xsd/v1")]
 public partial class AccessMethodsTypeDnsSd_mDns {
 }
 
@@ -622,7 +656,7 @@ public partial class AccessMethodsTypeDnsSd_mDns {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://docs.eebus.org/ship/xsd/v1")]
+//[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://docs.eebus.org/ship/xsd/v1")]
 public partial class AccessMethodsTypeDns {
     
     private string uriField;

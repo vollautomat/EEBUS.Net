@@ -3,6 +3,13 @@ using System;
 
 namespace EEBUS.Models
 {
+    public class ServerNodes
+    {
+		public string LocalSKI { get; set; }
+
+		public ServerNode[] Nodes { get; set; }
+	}
+
     public class ServerNode
     {
         public string Name { get; set; }
@@ -17,7 +24,9 @@ namespace EEBUS.Models
 
         public string LatestDataReceived { get; set; }
 
-        public override bool Equals(object obj)
+        public string LocalSKI { get; set; }
+
+		public override bool Equals(object obj)
         {
             if ((obj == null) || !this.GetType().Equals(obj.GetType()))
             {

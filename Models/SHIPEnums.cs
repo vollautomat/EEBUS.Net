@@ -1,17 +1,41 @@
 ﻿
+using Newtonsoft.Json;
+using System.Text;
+
 namespace EEBUS.Enums
 {
     public class SHIPHelloMessage
     {
         public ConnectionHelloType connectionHello { get; set; } = new ConnectionHelloType();
-    }
 
+        public byte[] ToJson()
+        {
+			var jsonSerializerSettings = new JsonSerializerSettings();
+			jsonSerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+
+			return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this, jsonSerializerSettings));
+		}
+	}
+
+	public class SHIPHelloResponse
+	{
+		public ConnectionHelloType[] connectionHello { get; set; }
+	}
+	
     public class SHIPHandshakeMessage
     {
         public MessageProtocolHandshakeType messageProtocolHandshake { get; set; } = new MessageProtocolHandshakeType();
-    }
 
-    public class SHIPHandshakeErrorMessage
+		public byte[] ToJson()
+		{
+			var jsonSerializerSettings = new JsonSerializerSettings();
+			jsonSerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+
+			return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this, jsonSerializerSettings));
+		}
+	}
+
+	public class SHIPHandshakeErrorMessage
     {
         public MessageProtocolHandshakeErrorType messageProtocolHandshakeError { get; set; } = new MessageProtocolHandshakeErrorType();
     }
@@ -23,10 +47,18 @@ namespace EEBUS.Enums
 
     public class SHIPCloseMessage
     {
-        public ConnectionCloseType connectionClose { get; set; } = new ConnectionCloseType();
-    }
+        public ConnectionCloseType[] connectionClose { get; set; } = new ConnectionCloseType[] { new ConnectionCloseType() };
 
-    public class SHIPAccessMethodsMessage
+		public byte[] ToJson()
+		{
+			var jsonSerializerSettings = new JsonSerializerSettings();
+			jsonSerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+
+			return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this, jsonSerializerSettings));
+		}
+	}
+
+	public class SHIPAccessMethodsMessage
     {
         public AccessMethodsType accessMethodsRequest { get; set; } = new AccessMethodsType();
     }
@@ -66,4 +98,37 @@ namespace EEBUS.Enums
         public const byte UNEXPECTED_MESSAGE = 2;
         public const byte SELECTION_MISMATCH = 3;
     }
+
+	public class SHIPPinCheckMessage
+	{
+		public ConnectionPinStateType connectionPinState { get; set; } = new ConnectionPinStateType();
+
+		public byte[] ToJson()
+		{
+			var jsonSerializerSettings = new JsonSerializerSettings();
+			jsonSerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+
+			return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this, jsonSerializerSettings));
+		}
+	}
+
+    public class AccessMethodsRequestMessage
+	{
+        public AccessMethodsRequestType accessMethodsRequest { get; set; } = new AccessMethodsRequestType();
+
+		public byte[] ToJson()
+		{
+			return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
+		}
+	}
+
+	public class AccessMethodsMessage
+	{
+		public AccessMethodsType accessMethods { get; set; } = new AccessMethodsType();
+
+		public byte[] ToJson()
+		{
+			return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
+		}
+	}
 }

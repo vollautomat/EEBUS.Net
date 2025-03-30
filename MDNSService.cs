@@ -8,7 +8,7 @@ namespace EEBUS
 {
     public class MDNSService
     {
-        private ServiceProfile serviceProfile = new ServiceProfile("Microsoft Azure EEBUS Gateway", "_ship._tcp", 50000);
+        private ServiceProfile serviceProfile = new ServiceProfile("Demo-CSharp-987654321", "_ship._tcp", 50000);
 
         public void AddProperty(string key, string value)
         {

@@ -117,8 +117,9 @@ namespace EEBUS
                         NullValueHandling = NullValueHandling.Include,
                         MissingMemberHandling = MissingMemberHandling.Error
                     };
+					jsonSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
 
-                    switch (receiveBuffer[0])
+					switch (receiveBuffer[0])
                     {
                         case SHIPMessageType.INIT:
 
@@ -242,7 +243,7 @@ namespace EEBUS
                             SHIPCloseMessage closeMessageReceived = JsonConvert.DeserializeObject<SHIPCloseMessage>(Encoding.UTF8.GetString(messageBuffer), jsonSettings);
                             if ((closeMessageReceived != null) && (closeMessageReceived.connectionClose != null))
                             {
-                                if (!await HandleCloseMessage(webSocket, closeMessageReceived.connectionClose).ConfigureAwait(false))
+                                if (!await HandleCloseMessage(webSocket, closeMessageReceived.connectionClose[0]).ConfigureAwait(false))
                                 {
                                     throw new Exception("Close message aborted!");
                                 }
@@ -264,8 +265,8 @@ namespace EEBUS
         {
             SHIPHelloMessage helloMessage = new SHIPHelloMessage();
             helloMessage.connectionHello.phase = ConnectionHelloPhaseType.ready;
-            byte[] helloMessageSerialized = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(helloMessage));
-            byte[] helloMessageBuffer = new byte[helloMessageSerialized.Length + 1];
+            byte[] helloMessageSerialized = helloMessage.ToJson();
+			byte[] helloMessageBuffer = new byte[helloMessageSerialized.Length + 1];
             helloMessageBuffer[0] = SHIPMessageType.CONTROL;
             Buffer.BlockCopy(helloMessageSerialized, 0, helloMessageBuffer, 1, helloMessageSerialized.Length);
 
@@ -286,7 +287,7 @@ namespace EEBUS
                         return false;
 
                     case ConnectionHelloPhaseType.pending:
-                        if (helloMessageReceived.prolongationRequestSpecified)
+                        if (helloMessageReceived.prolongationRequest)
                         {
                             // the client needs more time, send a hello update message
                             numProlongsReceived++;
@@ -361,7 +362,7 @@ namespace EEBUS
                     throw new Exception("Protocol version mismatch!");
                 }
 
-                if ((handshakeMessageReceived.formats.Length > 0) && (handshakeMessageReceived.formats[0] == SHIPMessageFormat.JSON_UTF8))
+                if ((handshakeMessageReceived.formats.format.Length > 0) && (handshakeMessageReceived.formats.format[0] == SHIPMessageFormat.JSON_UTF8))
                 {
                     // send protocol handshake response message
                     SHIPHandshakeMessage handshakeMessage = new SHIPHandshakeMessage();
@@ -371,9 +372,10 @@ namespace EEBUS
                         major = 1,
                         minor = 0
                     };
-                    handshakeMessage.messageProtocolHandshake.formats = new string[] { SHIPMessageFormat.JSON_UTF8 };
+					handshakeMessage.messageProtocolHandshake.formats.format = new string[] { SHIPMessageFormat.JSON_UTF8 };
 
-                    byte[] handshakeMessageSerialized = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(handshakeMessage));
+
+					byte[] handshakeMessageSerialized = handshakeMessage.ToJson();
                     byte[] handshakeMessageBuffer = new byte[handshakeMessageSerialized.Length + 1];
 
                     handshakeMessageBuffer[0] = SHIPMessageType.CONTROL;
@@ -543,10 +545,10 @@ namespace EEBUS
 
                 // send confirmation back
                 SHIPCloseMessage closeMessage = new SHIPCloseMessage();
-                closeMessage.connectionClose.phase = ConnectionClosePhaseType.confirm;
+                closeMessage.connectionClose[0].phase = ConnectionClosePhaseType.confirm;
 
-                byte[] closeMessageSerialized = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(closeMessage));
-                byte[] closeMessageBuffer = new byte[closeMessageSerialized.Length + 1];
+                byte[] closeMessageSerialized = closeMessage.ToJson();
+				byte[] closeMessageBuffer = new byte[closeMessageSerialized.Length + 1];
 
                 closeMessageBuffer[0] = SHIPMessageType.END;
                 Buffer.BlockCopy(closeMessageSerialized, 0, closeMessageBuffer, 1, closeMessageSerialized.Length);

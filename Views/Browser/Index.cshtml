@@ -1,6 +1,6 @@
 ﻿@using EEBUS.Models
 
-@model ServerNode[]
+@model ServerNodes
 
 @{
     ViewData["Title"] = "Browse EEBUS Servers";
@@ -11,10 +11,11 @@
  <p>
     <h3>List of Currently discovered EEBUS nodes:</h3>
  </p>
+ <p>Local SKI: @Model.LocalSKI</p>
 
 <div class="container-fluid browser_connect_container">
     <ul>
-        @foreach (var node in Model) 
+        @foreach (var node in Model.Nodes) 
         {
             @if (node.Error != null)
             {
@@ -23,12 +24,12 @@
             else
             {
                 <li>
-                    @node.Name<br/>
+                  @node.Name<br/>
                     @node.Id<br/>
                     @node.Url<br/>
                     <p/>
                     <form method="post" enctype="multipart/form-data" asp-controller="Browser" asp-action="Connect">
-                        <input name="EEBUS: @node.Name @node.Id @node.Url" class="btn btn-primary" type="submit" value="Connect">
+                        <input name="EEBUS:|@node.Name|@node.Id|@node.Url" class="btn btn-primary" type="submit" value="Connect">
                     </form>
                     <hr />
                 </li>
