@@ -2,10 +2,15 @@
 using Newtonsoft.Json.Converters;
 using System.Text.Json.Serialization;
 
-namespace EEBUS.SHIP
+namespace EEBUS.SHIP.Messages
 {
 	public class CloseMessage : JsonEndMessage<CloseMessage>
 	{
+		static CloseMessage()
+		{
+			Register();
+		}
+
 		public CloseMessage()
 		{
 		}

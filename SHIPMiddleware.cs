@@ -1,9 +1,4 @@
 ﻿
-using EEBUS.Enums;
-using EEBUS.SHIP;
-using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,6 +7,12 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+
+using Newtonsoft.Json;
+
+using EEBUS.Enums;
+using EEBUS.SHIP.Messages;
 
 namespace EEBUS
 {
@@ -110,34 +111,20 @@ namespace EEBUS
                         throw new Exception("Invalid EEBUS payload received, expected message size of at least 2!");
                     }
 
-                    // parse EEBUS payload
-                    byte[] messageBuffer = new byte[result.Count - 1];
-                    Buffer.BlockCopy(receiveBuffer, 1, messageBuffer, 0, result.Count - 1);
-
-                    // setup JSON serializer settings
-                    JsonSerializerSettings jsonSettings = new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Include,
-                        MissingMemberHandling = MissingMemberHandling.Error
-                    };
-					jsonSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
-
 					switch (receiveBuffer[0])
                     {
                         case SHIPMessageType.INIT:
 
                             Console.WriteLine($"Init message received from {connectedNodeName}.");
 
-                            if (messageBuffer[0] != SHIPMessageValue.CMI_HEAD)
+							InitMessage initMessageReceived = InitMessage.FromJson(receiveBuffer);
+
+							if (initMessageReceived.bytes[0] != SHIPMessageValue.CMI_HEAD)
                                 throw new Exception("Expected SMI_HEAD payload in INIT message!");
 
-                            // set response payload
-                            byte[] responseBuffer = new byte[2];
-                            responseBuffer[0] = SHIPMessageType.INIT;
-                            responseBuffer[1] = SHIPMessageValue.CMI_HEAD;
-
-                            // send response
-                            await webSocket.SendAsync(responseBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+							// set response payload
+							InitMessage initMessage = new InitMessage();
+							await initMessage.Send(webSocket);
 
                             break;
 
@@ -146,14 +133,12 @@ namespace EEBUS
                             // there are 6 control messages defined: Hello, ProtocolHandshake, ProtocolHandShakeError, AccessMethodsRequest, PINVerification and PINVerificationError
                             // Note: We ignore PINVerification and PINVerificationError messages
                             bool controlMessageHandled = false;
-                            
-                            string messageString = Encoding.UTF8.GetString(messageBuffer);
-                            if (string.IsNullOrEmpty(messageString))
-                                throw new Exception("Could not parse message string!");
 
-                            if (messageString.StartsWith("{\"connectionHello\":"))
+                            Type commandType = JsonMessageBase.GetType(receiveBuffer);
+
+                            if (commandType == typeof(ConnectionHelloMessage))
                             {
-                                SHIP.ConnectionHelloMessage helloMessageReceived = SHIP.ConnectionHelloMessage.FromJson(messageBuffer);
+                                ConnectionHelloMessage helloMessageReceived = ConnectionHelloMessage.FromJson(receiveBuffer);
                                 
                                 if ((helloMessageReceived != null) && (helloMessageReceived.connectionHello != null))
                                 {
@@ -165,11 +150,10 @@ namespace EEBUS
                                     controlMessageHandled = true;
                                 }
                             }
+                            else if (commandType == typeof(ProtocolHandshakeMessage))
+							{
+                                ProtocolHandshakeMessage handshakeMessageReceived = ProtocolHandshakeMessage.FromJson(receiveBuffer);
 
-                            if (messageString.StartsWith("{\"messageProtocolHandshake\":"))
-                            {
-                                SHIP.ProtocolHandshakeMessage handshakeMessageReceived = SHIP.ProtocolHandshakeMessage.FromJson(messageBuffer);
-                                
                                 if ((handshakeMessageReceived != null) && (handshakeMessageReceived.messageProtocolHandshake != null))
                                 {
                                     Console.WriteLine($"Handshake message received from {connectedNodeName}.");
@@ -180,10 +164,9 @@ namespace EEBUS
                                     controlMessageHandled = true;
                                 }
                             }
-
-                            if (messageString.StartsWith("{\"messageProtocolHandshakeError\":"))
-                            {
-								SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessageReceived = SHIP.ProtocolHandshakeErrorMessage.FromJson(messageBuffer);
+							else if (commandType == typeof(ProtocolHandshakeErrorMessage))
+							{
+								ProtocolHandshakeErrorMessage handshakeErrorMessageReceived = ProtocolHandshakeErrorMessage.FromJson(receiveBuffer);
                                 
                                 if ((handshakeErrorMessageReceived != null) && (handshakeErrorMessageReceived.messageProtocolHandshakeError != null))
                                 {
@@ -194,10 +177,9 @@ namespace EEBUS
                                     throw new Exception("Handshake aborted!");
                                 }
                             }
-
-							if (messageString.StartsWith("{\"connectionPinState\":"))
+							else if (commandType == typeof(PinCheckMessage))
 							{
-								SHIP.PinCheckMessage pinCheckMessageReceived = SHIP.PinCheckMessage.FromJson(messageBuffer);
+								PinCheckMessage pinCheckMessageReceived = PinCheckMessage.FromJson(receiveBuffer);
 
 								if ((pinCheckMessageReceived != null) && (pinCheckMessageReceived.connectionPinState != null))
 								{
@@ -209,10 +191,9 @@ namespace EEBUS
 									controlMessageHandled = true;
 								}
 							}
-
-							if (messageString.StartsWith("{\"accessMethodsRequest\":"))
-                            {
-								SHIP.AccessMethodsRequestMessage accessMethodsMessageReceived = SHIP.AccessMethodsRequestMessage.FromJson(messageBuffer);
+							else if (commandType == typeof(AccessMethodsRequestMessage))
+							{
+								AccessMethodsRequestMessage accessMethodsMessageReceived = AccessMethodsRequestMessage.FromJson(receiveBuffer);
 
                                 if ((accessMethodsMessageReceived != null) && (accessMethodsMessageReceived.accessMethodsRequest != null))
                                 {
@@ -224,10 +205,9 @@ namespace EEBUS
                                     controlMessageHandled = true;
                                 }
                             }
-
-							if (messageString.StartsWith("{\"accessMethods\":"))
+							else if (commandType == typeof(AccessMethodsMessage))
 							{
-								SHIP.AccessMethodsMessage accessMethodsMessageReceived = SHIP.AccessMethodsMessage.FromJson(messageBuffer);
+								AccessMethodsMessage accessMethodsMessageReceived = AccessMethodsMessage.FromJson(receiveBuffer);
 
 								if ((accessMethodsMessageReceived != null) && (accessMethodsMessageReceived.accessMethods != null))
 								{
@@ -251,7 +231,7 @@ namespace EEBUS
 
                             Console.WriteLine($"Data message received from {connectedNodeName}.");
 
-							SHIP.DataMessage dataMessageReceived = SHIP.DataMessage.FromJson(messageBuffer);
+							DataMessage dataMessageReceived = DataMessage.FromJson(receiveBuffer);
 
                             if ((dataMessageReceived != null) && (dataMessageReceived.data != null))
                             {
@@ -267,7 +247,7 @@ namespace EEBUS
 
                             Console.WriteLine($"Close message received from {connectedNodeName}.");
 
-							SHIP.CloseMessage closeMessageReceived = SHIP.CloseMessage.FromJson(messageBuffer);
+							CloseMessage closeMessageReceived = CloseMessage.FromJson(receiveBuffer);
                             
                             if ((closeMessageReceived != null) && (closeMessageReceived.connectionClose != null))
                             {
@@ -289,15 +269,15 @@ namespace EEBUS
             }
         }
 
-        private async Task<bool> HandleHelloMessage(WebSocket webSocket, SHIP.ConnectionHelloType helloMessageReceived)
+        private async Task<bool> HandleHelloMessage(WebSocket webSocket, ConnectionHelloType helloMessageReceived)
         {
-			SHIP.ConnectionHelloMessage helloReadyMessage = new SHIP.ConnectionHelloMessage(SHIP.ConnectionHelloPhaseType.ready);
+			ConnectionHelloMessage helloReadyMessage = new ConnectionHelloMessage(ConnectionHelloPhaseType.ready);
 			int numProlongsReceived = 0;
             while (true)
             {
                 switch (helloMessageReceived.phase)
                 {
-                    case SHIP.ConnectionHelloPhaseType.ready:
+                    case ConnectionHelloPhaseType.ready:
 						// send "ready" message back
 						
                         await helloReadyMessage.Send(webSocket);
@@ -305,11 +285,11 @@ namespace EEBUS
                         // all good, we can move on
                         return true;
 
-                    case SHIP.ConnectionHelloPhaseType.aborted:
+                    case ConnectionHelloPhaseType.aborted:
                         // client aborted
                         return false;
 
-                    case SHIP.ConnectionHelloPhaseType.pending:
+                    case ConnectionHelloPhaseType.pending:
                         if (helloMessageReceived.prolongationRequest)
                         {
                             // the client needs more time, send a hello update message
@@ -318,7 +298,7 @@ namespace EEBUS
                             if (numProlongsReceived > 2)
                             {
                                 Console.WriteLine("More than 2 prolong requests received, aborting!");
-								SHIP.ConnectionHelloMessage helloAbortMessage = new SHIP.ConnectionHelloMessage(SHIP.ConnectionHelloPhaseType.aborted);
+								ConnectionHelloMessage helloAbortMessage = new ConnectionHelloMessage(ConnectionHelloPhaseType.aborted);
 								await helloAbortMessage.Send(webSocket);
 
                                 return false;
@@ -339,12 +319,12 @@ namespace EEBUS
                 }
 
                 // receive the next hello message
-                SHIP.ConnectionHelloMessage helloMessage = await SHIP.ConnectionHelloMessage.Receive(webSocket);
+                ConnectionHelloMessage helloMessage = await ConnectionHelloMessage.Receive(webSocket);
                 helloMessageReceived = helloMessage.connectionHello;
 			}
         }
 
-        private async Task<bool> HandleHandshakeMessage(WebSocket webSocket, SHIP.MessageProtocolHandshakeType handshakeMessageReceived)
+        private async Task<bool> HandleHandshakeMessage(WebSocket webSocket, MessageProtocolHandshakeType handshakeMessageReceived)
         {
             try
             {
@@ -361,11 +341,11 @@ namespace EEBUS
                 if ((handshakeMessageReceived.formats.format.Length > 0) && (handshakeMessageReceived.formats.format[0] == SHIPMessageFormat.JSON_UTF8))
                 {
                     // send protocol handshake response message
-                    SHIP.ProtocolHandshakeMessage handshakeMessage = new SHIP.ProtocolHandshakeMessage(ProtocolHandshakeTypeType.select, 1, 0);
+                    ProtocolHandshakeMessage handshakeMessage = new ProtocolHandshakeMessage(ProtocolHandshakeTypeType.select, 1, 0);
 					await handshakeMessage.Send(webSocket);
 
 					// wait for final confirmation from client
-					SHIP.ProtocolHandshakeMessage handshakeResponse = await SHIP.ProtocolHandshakeMessage.Receive(webSocket);
+					ProtocolHandshakeMessage handshakeResponse = await ProtocolHandshakeMessage.Receive(webSocket);
 
                     return handshakeResponse.IsEqual(handshakeMessage);
                 }
@@ -378,7 +358,7 @@ namespace EEBUS
             {
                 try
                 {
-                    SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
+                    ProtocolHandshakeErrorMessage handshakeErrorMessage = new ProtocolHandshakeErrorMessage();
 
                     if (ex.Message.Contains("mismatch"))
                         handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
@@ -396,7 +376,7 @@ namespace EEBUS
             }
         }
 
-		private async Task<bool> HandlePinCheckMessage(WebSocket webSocket, SHIP.ConnectionPinStateType pinCheckReceived)
+		private async Task<bool> HandlePinCheckMessage(WebSocket webSocket, ConnectionPinStateType pinCheckReceived)
 		{
 			try
             {
@@ -411,21 +391,21 @@ namespace EEBUS
 				Console.WriteLine("Exception: " + innerEx.Message);
 			}
 
-			SHIP.PinCheckMessage pinCheckMessage = new SHIP.PinCheckMessage(PinStateType.none);
+			PinCheckMessage pinCheckMessage = new PinCheckMessage(PinStateType.none);
 			await pinCheckMessage.Send(webSocket);
 
 			return true;
 		}
 
-		private async Task<bool> HandleAccessMethodsRequestMessage(string connectedNodeName, WebSocket webSocket, SHIP.AccessMethodsRequestType accessMethodsRequest)
+		private async Task<bool> HandleAccessMethodsRequestMessage(string connectedNodeName, WebSocket webSocket, AccessMethodsRequestType accessMethodsRequest)
 		{
-			SHIP.AccessMethodsRequestMessage accessMethodsRequestResponse = new SHIP.AccessMethodsRequestMessage();
+			AccessMethodsRequestMessage accessMethodsRequestResponse = new AccessMethodsRequestMessage();
 			await accessMethodsRequestResponse.Send(webSocket);
 
 			return true;
 		}
 
-		private async Task<bool> HandleAccessMethodsMessage(string connectedNodeName, WebSocket webSocket, SHIP.AccessMethodsType accessMethods)
+		private async Task<bool> HandleAccessMethodsMessage(string connectedNodeName, WebSocket webSocket, AccessMethodsType accessMethods)
         {
             try
             {
@@ -440,7 +420,7 @@ namespace EEBUS
                     Console.WriteLine($"Received access method DNS from {connectedNodeName} with ID {accessMethods.id} at {accessMethods.dns.uri}.");
                 }
 
-				SHIP.AccessMethodsMessage accessMethodsResponse = new SHIP.AccessMethodsMessage(accessMethods.id);
+				AccessMethodsMessage accessMethodsResponse = new AccessMethodsMessage(accessMethods.id);
 				await accessMethodsResponse.Send(webSocket);
 			}
 			catch (Exception ex)
@@ -479,7 +459,7 @@ namespace EEBUS
             try
             {
                 // send data payload
-                SHIP.DataMessage dataMessage = new SHIP.DataMessage(payload);
+                DataMessage dataMessage = new DataMessage(payload);
                 await dataMessage.Send(webSocket);
 
                 return true;
@@ -519,7 +499,7 @@ namespace EEBUS
                 }
 
                 // send confirmation back
-                SHIP.CloseMessage closeMessage = new SHIP.CloseMessage(ConnectionClosePhaseType.confirm);
+                CloseMessage closeMessage = new CloseMessage(ConnectionClosePhaseType.confirm);
                 await closeMessage.Send(webSocket);
             }
             catch (Exception ex)

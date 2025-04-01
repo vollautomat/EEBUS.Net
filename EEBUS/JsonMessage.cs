@@ -1,26 +1,41 @@
 ﻿using EEBUS.Enums;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace EEBUS
 {
-	public abstract class JsonMessage<T> where T: JsonMessage<T>,  new()
+	public abstract class JsonMessage<T> : JsonMessageBase where T: JsonMessage<T>, new()
 	{
 		private byte[] sentData;
 
 		protected abstract byte GetDataType();
 		static private JsonMessage<T> template = new T();
 
-		private byte[] ToJson()
+		static protected void Register()
+		{
+			byte[] test = template.ToJson();
+			string cmd = GetCommand(test);
+
+			messages.Add(cmd, typeof(T));
+		}
+
+		protected virtual byte[] ToJson()
 		{
 			var jsonSerializerSettings = new JsonSerializerSettings();
 			jsonSerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
 
 			return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this, jsonSerializerSettings));
+		}
+
+		protected virtual T FromJsonVirtual(byte[] data)
+		{
+			return FromJson(data);
 		}
 
 		static public T FromJson(byte[] data)
@@ -31,9 +46,12 @@ namespace EEBUS
 				MissingMemberHandling = MissingMemberHandling.Error
 			};
 
+			if (data == null || data.Length < 2)
+				return null;
+
 			string dataStr = Encoding.UTF8.GetString(data);
-			dataStr = JsonFromEEBUSJson(dataStr);
-			
+			dataStr = JsonFromEEBUSJson(data[0] == template.GetDataType() ? dataStr.Substring(1) : dataStr);
+
 			return JsonConvert.DeserializeObject<T>(dataStr, settings);
 		}
 
@@ -64,19 +82,7 @@ namespace EEBUS
 			if ((result.Count < 2) || (msg[0] != template.GetDataType()))
 				throw new Exception($"Expected message of type {template.GetDataType()}!");
 
-			byte[] buffer = new byte[result.Count - 1];
-			Buffer.BlockCopy(msg, 1, buffer, 0, result.Count - 1);
-
-			return FromJson(buffer);
-		}
-
-		static private string JsonFromEEBUSJson(string json)
-		{
-			json = json.Replace("[{", "{");
-			json = json.Replace("},{", ",");
-			json = json.Replace("}]", "}");
-			json = json.Replace("[]", "{}");
-			return json;
+			return template.FromJsonVirtual(msg);
 		}
 	}
 }

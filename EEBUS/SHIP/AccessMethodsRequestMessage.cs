@@ -2,10 +2,15 @@
 using Newtonsoft.Json.Converters;
 using System.Text.Json.Serialization;
 
-namespace EEBUS.SHIP
+namespace EEBUS.SHIP.Messages
 {
 	public class AccessMethodsRequestMessage : JsonControlMessage<AccessMethodsRequestMessage>
 	{
+		static AccessMethodsRequestMessage()
+		{
+			Register();
+		}
+
 		public AccessMethodsRequestMessage()
 		{
 		}

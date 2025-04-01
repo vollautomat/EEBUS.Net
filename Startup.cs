@@ -1,4 +1,12 @@
 
+using System;
+using System.Linq;
+using System.Net;
+using System.Net.Security;
+using System.Reflection;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -7,11 +15,6 @@ using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Net;
-using System.Net.Security;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 
 namespace EEBUS
 {
@@ -95,9 +98,20 @@ namespace EEBUS
 
             app.UseMiddleware<SHIPMiddleware>();
 
+			foreach (Type type in GetTypesInNamespace(typeof(Startup).Assembly, "EEBUS.SHIP.Messages"))
+			    System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+
 			// start our mDNS services
 			mDNSClient.Run();
             mDNSService.Run();
         }
-    }
+
+		private Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
+		{
+			return
+			  assembly.GetTypes()
+					  .Where(t => String.Equals(t.Namespace, nameSpace, StringComparison.Ordinal))
+					  .ToArray();
+		}
+	}
 }

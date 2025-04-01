@@ -1,21 +1,19 @@
 ﻿
 namespace EEBUS.Controllers
 {
-    using EEBUS.Enums;
-    using EEBUS.Models;
-	using EEBUS.SHIP;
-	using Microsoft.AspNetCore.Mvc;
-    using Newtonsoft.Json;
     using System;
-    using System.Net;
     using System.Net.Security;
     using System.Net.WebSockets;
 	using System.Security.Cryptography.X509Certificates;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+	using Microsoft.AspNetCore.Mvc;
 
-    public class BrowserController : Controller
+	using EEBUS.Enums;
+	using EEBUS.Models;
+	using EEBUS.SHIP.Messages;
+
+	public class BrowserController : Controller
     {
         private readonly MDNSClient _mDNSClient;
 		private readonly MDNSService _mDNSService;
@@ -206,11 +204,11 @@ namespace EEBUS.Controllers
                 if (_wsClient.State == WebSocketState.Open)
                 {
                     // send data message
-                    SHIP.DataMessage dataMessage = new SHIP.DataMessage("spine", payload);
+                    DataMessage dataMessage = new DataMessage("spine", payload);
                     await dataMessage.Send(_wsClient);
 
                     // wait for data response message from server
-                    dataMessage = await SHIP.DataMessage.Receive(_wsClient);
+                    dataMessage = await DataMessage.Receive(_wsClient);
 
                     if (dataMessage == null)
 						return await Disconnect().ConfigureAwait(false);
@@ -240,21 +238,13 @@ namespace EEBUS.Controllers
         private async Task<bool> InitPhase()
         {
             // send init request message
-            byte[] initRequest = new byte[2];
-            initRequest[0] = SHIPMessageType.INIT;
-            initRequest[1] = SHIPMessageValue.CMI_HEAD;
+            InitMessage initMessage = new InitMessage();
+            await initMessage.Send(_wsClient);
 
-            await _wsClient.SendAsync(initRequest, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+			// wait for init response message from server
+			InitMessage initResponse = await InitMessage.Receive(_wsClient);
 
-            // wait for init response message from server
-            byte[] initResponse = new byte[2];
-            WebSocketReceiveResult result = await _wsClient.ReceiveAsync(initResponse, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-            if (result.MessageType == WebSocketMessageType.Close)
-            {
-                return false;
-            }
-
-            if ((initResponse[0] != SHIPMessageType.INIT) || (initResponse[1] != SHIPMessageValue.CMI_HEAD))
+            if ((initResponse.bytes[0] != SHIPMessageType.INIT) || (initResponse.bytes[1] != SHIPMessageValue.CMI_HEAD))
             {
                 throw new Exception("Expected init response message!");
             }
@@ -269,27 +259,27 @@ namespace EEBUS.Controllers
                 // send connection data preparation ("hello" message)
                 bool helloPhase = true;
 
-                SHIP.ConnectionHelloMessage helloMessage = new SHIP.ConnectionHelloMessage(SHIP.ConnectionHelloPhaseType.ready, 60000);
+                ConnectionHelloMessage helloMessage = new ConnectionHelloMessage(ConnectionHelloPhaseType.ready, 60000);
                 await helloMessage.Send(_wsClient);
 
                 // wait for hello response message from server
                 int numProlongsReceived = 0;
                 while (helloPhase)
                 {
-                    SHIP.ConnectionHelloMessage helloResponse = await SHIP.ConnectionHelloMessage.Receive(_wsClient, SHIPMessageTimeout.T_HELLO_INIT);
+                    ConnectionHelloMessage helloResponse = await ConnectionHelloMessage.Receive(_wsClient, SHIPMessageTimeout.T_HELLO_INIT);
 
 					switch (helloResponse.connectionHello.phase)
                     {
-                        case SHIP.ConnectionHelloPhaseType.ready:
+                        case ConnectionHelloPhaseType.ready:
                             // all good, we can move on
                             helloPhase = false;
                             break;
 
-                        case SHIP.ConnectionHelloPhaseType.aborted:
+                        case ConnectionHelloPhaseType.aborted:
                             // server aborted
                             return false;
 
-                        case SHIP.ConnectionHelloPhaseType.pending:
+                        case ConnectionHelloPhaseType.pending:
 
                             if (helloResponse.connectionHello.prolongationRequest)
                             {
@@ -314,7 +304,7 @@ namespace EEBUS.Controllers
                 try
                 {
 					// send hello abort message
-					SHIP.ConnectionHelloMessage helloMessage = new SHIP.ConnectionHelloMessage(SHIP.ConnectionHelloPhaseType.aborted);
+					ConnectionHelloMessage helloMessage = new ConnectionHelloMessage(ConnectionHelloPhaseType.aborted);
                     await helloMessage.Send(_wsClient);
                 }
                 catch (Exception ex)
@@ -331,13 +321,13 @@ namespace EEBUS.Controllers
             try
             {
                 // send protocol handshake message
-                SHIP.ProtocolHandshakeMessage handshakeMessage = new SHIP.ProtocolHandshakeMessage(SHIP.ProtocolHandshakeTypeType.announceMax, 1, 0);
+                ProtocolHandshakeMessage handshakeMessage = new ProtocolHandshakeMessage(ProtocolHandshakeTypeType.announceMax, 1, 0);
                 await handshakeMessage.Send(_wsClient);
 
 				// wait for handshake response message from server
-				handshakeMessage = await SHIP.ProtocolHandshakeMessage.Receive(_wsClient);
+				handshakeMessage = await ProtocolHandshakeMessage.Receive(_wsClient);
 
-                if (handshakeMessage.messageProtocolHandshake.handshakeType != SHIP.ProtocolHandshakeTypeType.select)
+                if (handshakeMessage.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.select)
                     throw new Exception("Protocol version selection expected!");
 
                 if (handshakeMessage.messageProtocolHandshake.version.major != 1 && handshakeMessage.messageProtocolHandshake.version.minor != 0)
@@ -360,7 +350,7 @@ namespace EEBUS.Controllers
                 try
                 {
                     // send handshake error message
-                    SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
+                    ProtocolHandshakeErrorMessage handshakeErrorMessage = new ProtocolHandshakeErrorMessage();
 
                     if (ex.Message.Contains("mismatch"))
                         handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
@@ -383,11 +373,11 @@ namespace EEBUS.Controllers
 			try
 			{
 				// send protocol pincheck message
-				SHIP.PinCheckMessage pincheckMessage = new SHIP.PinCheckMessage(PinStateType.none);
+				PinCheckMessage pincheckMessage = new PinCheckMessage(PinStateType.none);
                 await pincheckMessage.Send(_wsClient);
 
                 // wait for handshake response message from server
-                pincheckMessage = await SHIP.PinCheckMessage.Receive(_wsClient);
+                pincheckMessage = await PinCheckMessage.Receive(_wsClient);
 
 				if (pincheckMessage.connectionPinState.pinState != PinStateType.none)
 					throw new Exception("Pinstate none expected!");
@@ -402,7 +392,7 @@ namespace EEBUS.Controllers
 				try
 				{
 					// send handshake error message
-					SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
+					ProtocolHandshakeErrorMessage handshakeErrorMessage = new ProtocolHandshakeErrorMessage();
 
 					if (ex.Message.Contains("mismatch"))
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
@@ -425,11 +415,11 @@ namespace EEBUS.Controllers
 			try
 			{
 				// send access methods request message
-				SHIP.AccessMethodsRequestMessage accessMethodsRequestMessage = new SHIP.AccessMethodsRequestMessage();
+				AccessMethodsRequestMessage accessMethodsRequestMessage = new AccessMethodsRequestMessage();
                 await accessMethodsRequestMessage.Send(_wsClient);
 
                 // wait for handshake response message from server
-                accessMethodsRequestMessage = await SHIP.AccessMethodsRequestMessage.Receive(_wsClient);
+                accessMethodsRequestMessage = await AccessMethodsRequestMessage.Receive(_wsClient);
                 if (accessMethodsRequestMessage == null)
                 {
                     throw new Exception("Access methods request parsing failed!");
@@ -442,7 +432,7 @@ namespace EEBUS.Controllers
 				try
 				{
 					// send handshake error message
-					SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
+					ProtocolHandshakeErrorMessage handshakeErrorMessage = new ProtocolHandshakeErrorMessage();
 
 					if (ex.Message.Contains("mismatch"))
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
@@ -465,12 +455,12 @@ namespace EEBUS.Controllers
 			try
 			{
 				// send access methods request message
-				SHIP.AccessMethodsMessage accessMethodsMessage = new SHIP.AccessMethodsMessage("Demo-CSharp-987654321");
+				AccessMethodsMessage accessMethodsMessage = new AccessMethodsMessage("Demo-CSharp-987654321");
 
                 await accessMethodsMessage.Send(_wsClient);
 
                 // wait for handshake response message from server
-                accessMethodsMessage = await SHIP.AccessMethodsMessage.Receive(_wsClient);
+                accessMethodsMessage = await AccessMethodsMessage.Receive(_wsClient);
 
 				return true;
 			}
@@ -479,7 +469,7 @@ namespace EEBUS.Controllers
 				try
 				{
 					// send handshake error message
-					SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
+					ProtocolHandshakeErrorMessage handshakeErrorMessage = new ProtocolHandshakeErrorMessage();
 
 					if (ex.Message.Contains("mismatch"))
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
@@ -505,11 +495,11 @@ namespace EEBUS.Controllers
                 if (_wsClient != null)
                 {
                     // send close message
-                    SHIP.CloseMessage closeMessage = new SHIP.CloseMessage(ConnectionClosePhaseType.announce);
+                    CloseMessage closeMessage = new CloseMessage(ConnectionClosePhaseType.announce);
                     await closeMessage.Send(_wsClient);
 
                     // wait for close response message from server
-                    closeMessage = await SHIP.CloseMessage.Receive(_wsClient);
+                    closeMessage = await CloseMessage.Receive(_wsClient);
 
                     if (closeMessage == null)
                     {

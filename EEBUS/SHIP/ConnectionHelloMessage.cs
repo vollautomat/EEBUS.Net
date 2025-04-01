@@ -1,10 +1,15 @@
 ﻿using Newtonsoft.Json.Converters;
 using System.Text.Json.Serialization;
 
-namespace EEBUS.SHIP
+namespace EEBUS.SHIP.Messages
 {
 	public class ConnectionHelloMessage : JsonControlMessage<ConnectionHelloMessage>
 	{
+		static ConnectionHelloMessage()
+		{
+			Register();
+		}
+
 		public ConnectionHelloMessage()
 		{
 		}
