@@ -3,7 +3,8 @@ namespace EEBUS.Controllers
 {
     using EEBUS.Enums;
     using EEBUS.Models;
-    using Microsoft.AspNetCore.Mvc;
+	using EEBUS.SHIP;
+	using Microsoft.AspNetCore.Mvc;
     using Newtonsoft.Json;
     using System;
     using System.Net;
@@ -205,51 +206,22 @@ namespace EEBUS.Controllers
                 if (_wsClient.State == WebSocketState.Open)
                 {
                     // send data message
-                    SHIPDataMessage dataMessage = new SHIPDataMessage();
-                    dataMessage.data.header = new HeaderType();
-                    dataMessage.data.header.protocolId = "spine";
-                    dataMessage.data.payload = payload;
-                    
-                    byte[] dataMessageSerialized = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dataMessage));
-                    byte[] dataMessageBuffer = new byte[dataMessageSerialized.Length + 1];
-
-                    dataMessageBuffer[0] = SHIPMessageType.DATA;
-                    Buffer.BlockCopy(dataMessageSerialized, 0, dataMessageBuffer, 1, dataMessageSerialized.Length);
-
-                    await _wsClient.SendAsync(dataMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+                    SHIP.DataMessage dataMessage = new SHIP.DataMessage("spine", payload);
+                    await dataMessage.Send(_wsClient);
 
                     // wait for data response message from server
-                    byte[] dataResponse = new byte[1024];
-                    WebSocketReceiveResult result = await _wsClient.ReceiveAsync(dataResponse, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-                    if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        return await Disconnect().ConfigureAwait(false);
-                    }
+                    dataMessage = await SHIP.DataMessage.Receive(_wsClient);
 
-                    if ((result.Count < 2) || (dataResponse[0] != SHIPMessageType.DATA))
-                    {
-                        throw new Exception("Data message expected!");
-                    }
+                    if (dataMessage == null)
+						return await Disconnect().ConfigureAwait(false);
 
-                    byte[] dataResponseMessageBuffer = new byte[result.Count - 1];
-                    Buffer.BlockCopy(dataResponse, 1, dataResponseMessageBuffer, 0, result.Count - 1);
-
-                    var settings = new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Include,
-                        MissingMemberHandling = MissingMemberHandling.Error
-                    };
-
-                    string dataResponseMsg = Encoding.UTF8.GetString(dataResponseMessageBuffer);
-                    dataResponseMsg = JsonFromEEBUSJson(dataResponseMsg);
-					SHIPDataMessage dataMessageReceived = JsonConvert.DeserializeObject<SHIPDataMessage>(dataResponseMsg, settings);
-                    if ((dataMessageReceived == null) || (dataMessageReceived.data == null) || (dataMessageReceived.data.payload == null))
+					if ((dataMessage.data == null) || (dataMessage.data.payload == null))
                     {
                         throw new Exception("Data message parsing failed!");
                     }
                     else
                     {
-                        _model.LatestDataReceived = dataMessageReceived.data.payload.ToString();
+                        _model.LatestDataReceived = dataMessage.data.payload.ToString();
                     }
 
                     return View("Connected", _model);
@@ -297,81 +269,36 @@ namespace EEBUS.Controllers
                 // send connection data preparation ("hello" message)
                 bool helloPhase = true;
 
-                SHIPHelloMessage helloMessage = new SHIPHelloMessage();
-                helloMessage.connectionHello.phase = ConnectionHelloPhaseType.ready;
-                helloMessage.connectionHello.waiting = 60000;
-
-				byte[] helloMessageSerialized = helloMessage.ToJson();
-				var helloMsg = System.Text.Encoding.Default.GetString(helloMessageSerialized);
-				Console.WriteLine("helloMessage: " + helloMsg);
-				byte[] helloMessageBuffer = new byte[helloMessageSerialized.Length + 1];
-
-                helloMessageBuffer[0] = SHIPMessageType.CONTROL;
-                Buffer.BlockCopy(helloMessageSerialized, 0, helloMessageBuffer, 1, helloMessageSerialized.Length);
-
-                await _wsClient.SendAsync(helloMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+                SHIP.ConnectionHelloMessage helloMessage = new SHIP.ConnectionHelloMessage(SHIP.ConnectionHelloPhaseType.ready, 60000);
+                await helloMessage.Send(_wsClient);
 
                 // wait for hello response message from server
                 int numProlongsReceived = 0;
                 while (helloPhase)
                 {
-                    byte[] helloResponse = new byte[256];
-                    WebSocketReceiveResult result = await _wsClient.ReceiveAsync(helloResponse, new CancellationTokenSource(SHIPMessageTimeout.T_HELLO_INIT).Token).ConfigureAwait(false);
-                    if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        return false;
-                    }
+                    SHIP.ConnectionHelloMessage helloResponse = await SHIP.ConnectionHelloMessage.Receive(_wsClient, SHIPMessageTimeout.T_HELLO_INIT);
 
-                    if ((result.Count < 2) || (helloResponse[0] != SHIPMessageType.CONTROL))
+					switch (helloResponse.connectionHello.phase)
                     {
-                        throw new Exception("Expected hello message!");
-                    }
-
-                    byte[] helloResponseMessageBuffer = new byte[result.Count - 1];
-                    Buffer.BlockCopy(helloResponse, 1, helloResponseMessageBuffer, 0, result.Count - 1);
-
-                    var settings = new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Include,
-                    //    MissingMemberHandling = MissingMemberHandling.Error
-                    };
-
-                    string helloResponseMessage = Encoding.UTF8.GetString(helloResponseMessageBuffer);
-                    Console.WriteLine("helloResponseMessage: " + helloResponseMessage);
-					SHIPHelloResponse helloMessageReceived = JsonConvert.DeserializeObject<SHIPHelloResponse>(helloResponseMessage, settings);
-                    if (helloMessageReceived == null)
-                    {
-                        throw new Exception("Hello message response parsing failed!");
-                    }
-                    else if (helloMessageReceived.connectionHello.Length == 0)
-                    {
-						throw new Exception("Hello message response without data!");
-					}
-                    //int indx = helloMessageReceived.connectionHello.Length - 1;
-
-					switch (helloMessageReceived.connectionHello[0].phase)
-                    {
-                        case ConnectionHelloPhaseType.ready:
+                        case SHIP.ConnectionHelloPhaseType.ready:
                             // all good, we can move on
                             helloPhase = false;
                             break;
 
-                        case ConnectionHelloPhaseType.aborted:
+                        case SHIP.ConnectionHelloPhaseType.aborted:
                             // server aborted
                             return false;
 
-                        case ConnectionHelloPhaseType.pending:
+                        case SHIP.ConnectionHelloPhaseType.pending:
 
-                            if (helloMessageReceived.connectionHello[0].prolongationRequest)
+                            if (helloResponse.connectionHello.prolongationRequest)
                             {
                                 // the server needs more time, send a hello update message
                                 numProlongsReceived++;
-                                if (helloMessageReceived.connectionHello.Length > 2)
-                                {
+                                if (numProlongsReceived > 2)
                                     throw new Exception("More than 2 prolong requests received, aborting!");
-                                }
 
-                                await _wsClient.SendAsync(helloMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.T_HELLO_PROLONG_WAITING_GAP).Token).ConfigureAwait(false);
+                                await helloMessage.Resend(_wsClient);
                             }
 
                             break;
@@ -382,21 +309,13 @@ namespace EEBUS.Controllers
 
                 return true;
             }
-            catch (Exception _ex)
+            catch (Exception)
             {
                 try
                 {
-                    // send hello abort message
-                    SHIPHelloMessage helloMessage = new SHIPHelloMessage();
-                    helloMessage.connectionHello.phase = ConnectionHelloPhaseType.aborted;
-
-                    byte[] helloMessageSerialized = helloMessage.ToJson();
-					byte[] helloMessageBuffer = new byte[helloMessageSerialized.Length + 1];
-
-                    helloMessageBuffer[0] = SHIPMessageType.CONTROL;
-                    Buffer.BlockCopy(helloMessageSerialized, 0, helloMessageBuffer, 1, helloMessageSerialized.Length);
-                    
-                    await _wsClient.SendAsync(helloMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+					// send hello abort message
+					SHIP.ConnectionHelloMessage helloMessage = new SHIP.ConnectionHelloMessage(SHIP.ConnectionHelloPhaseType.aborted);
+                    await helloMessage.Send(_wsClient);
                 }
                 catch (Exception ex)
                 {
@@ -412,70 +331,22 @@ namespace EEBUS.Controllers
             try
             {
                 // send protocol handshake message
-                SHIPHandshakeMessage handshakeMessage = new SHIPHandshakeMessage();
-                handshakeMessage.messageProtocolHandshake.handshakeType = ProtocolHandshakeTypeType.announceMax;
-                handshakeMessage.messageProtocolHandshake.version = new MessageProtocolHandshakeTypeVersion
-                {
-                    major = 1,
-                    minor = 0
-                };
-                handshakeMessage.messageProtocolHandshake.formats.format = new string[] { SHIPMessageFormat.JSON_UTF8 };
+                SHIP.ProtocolHandshakeMessage handshakeMessage = new SHIP.ProtocolHandshakeMessage(SHIP.ProtocolHandshakeTypeType.announceMax, 1, 0);
+                await handshakeMessage.Send(_wsClient);
 
-                byte[] handshakeMessageSerialized = handshakeMessage.ToJson();
-                byte[] handshakeMessageBuffer = new byte[handshakeMessageSerialized.Length + 1];
+				// wait for handshake response message from server
+				handshakeMessage = await SHIP.ProtocolHandshakeMessage.Receive(_wsClient);
 
-                handshakeMessageBuffer[0] = SHIPMessageType.CONTROL;
-                Buffer.BlockCopy(handshakeMessageSerialized, 0, handshakeMessageBuffer, 1, handshakeMessageSerialized.Length);
-
-                await _wsClient.SendAsync(handshakeMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-
-                // wait for handshake response message from server
-                byte[] handshakeResponse = new byte[256];
-                WebSocketReceiveResult result = await _wsClient.ReceiveAsync(handshakeResponse, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    return false;
-                }
-
-                if ((result.Count < 2) || (handshakeResponse[0] != SHIPMessageType.CONTROL))
-                {
-                    throw new Exception("Handshake message expected!");
-                }
-
-                byte[] handshakeResponseMessageBuffer = new byte[result.Count - 1];
-                Buffer.BlockCopy(handshakeResponse, 1, handshakeResponseMessageBuffer, 0, result.Count - 1);
-
-                var settings = new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Include,
-                    MissingMemberHandling = MissingMemberHandling.Error
-                };
-
-                string handshakeResponseMsg = Encoding.UTF8.GetString(handshakeResponseMessageBuffer);
-                handshakeResponseMsg = JsonFromEEBUSJson(handshakeResponseMsg);
-
-				SHIPHandshakeMessage handshakeMessageReceived = JsonConvert.DeserializeObject<SHIPHandshakeMessage>(handshakeResponseMsg, settings);
-                if (handshakeMessageReceived == null)
-                {
-                    throw new Exception("Handshake message parsing failed!");
-                }
-
-                if (handshakeMessageReceived.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.select)
-                {
+                if (handshakeMessage.messageProtocolHandshake.handshakeType != SHIP.ProtocolHandshakeTypeType.select)
                     throw new Exception("Protocol version selection expected!");
-                }
 
-                if (handshakeMessageReceived.messageProtocolHandshake.version.major != 1 && handshakeMessageReceived.messageProtocolHandshake.version.minor != 0)
-                {
+                if (handshakeMessage.messageProtocolHandshake.version.major != 1 && handshakeMessage.messageProtocolHandshake.version.minor != 0)
                     throw new Exception("Protocol version mismatch!");
-                }
 
-                if ((handshakeMessageReceived.messageProtocolHandshake.formats.format.Length > 0) && (handshakeMessageReceived.messageProtocolHandshake.formats.format[0] == SHIPMessageFormat.JSON_UTF8))
+                if ((handshakeMessage.messageProtocolHandshake.formats.format.Length > 0) && (handshakeMessage.messageProtocolHandshake.formats.format[0] == SHIPMessageFormat.JSON_UTF8))
                 {
                     // send the message back
-                    byte[] handshakeReturn = new byte[result.Count];
-                    Buffer.BlockCopy(handshakeResponse, 0, handshakeReturn, 0, result.Count);
-                    await _wsClient.SendAsync(handshakeReturn, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+                    await handshakeMessage.Send(_wsClient);
 
                     return true;
                 }
@@ -489,24 +360,14 @@ namespace EEBUS.Controllers
                 try
                 {
                     // send handshake error message
-                    SHIPHandshakeErrorMessage handshakeErrorMessage = new SHIPHandshakeErrorMessage();
+                    SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
 
                     if (ex.Message.Contains("mismatch"))
-                    {
                         handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
-                    }
                     else
-                    {
                         handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.UNEXPECTED_MESSAGE;
-                    }
-                    
-                    byte[] handshakeMessageSerialized = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(handshakeErrorMessage));
-                    byte[] handshakeMessageBuffer = new byte[handshakeMessageSerialized.Length + 1];
 
-                    handshakeMessageBuffer[0] = SHIPMessageType.CONTROL;
-                    Buffer.BlockCopy(handshakeMessageSerialized, 0, handshakeMessageBuffer, 1, handshakeMessageSerialized.Length);
-
-                    await _wsClient.SendAsync(handshakeMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+                    await handshakeErrorMessage.Send(_wsClient);
                 }
                 catch (Exception innerEx)
                 {
@@ -522,57 +383,17 @@ namespace EEBUS.Controllers
 			try
 			{
 				// send protocol pincheck message
-				SHIPPinCheckMessage pincheckMessage = new SHIPPinCheckMessage();
-				pincheckMessage.connectionPinState.pinState = PinStateType.none;
+				SHIP.PinCheckMessage pincheckMessage = new SHIP.PinCheckMessage(PinStateType.none);
+                await pincheckMessage.Send(_wsClient);
 
-				byte[] pincheckMessageSerialized = pincheckMessage.ToJson();
-				byte[] pincheckMessageBuffer = new byte[pincheckMessageSerialized.Length + 1];
+                // wait for handshake response message from server
+                pincheckMessage = await SHIP.PinCheckMessage.Receive(_wsClient);
 
-				pincheckMessageBuffer[0] = SHIPMessageType.CONTROL;
-				Buffer.BlockCopy(pincheckMessageSerialized, 0, pincheckMessageBuffer, 1, pincheckMessageSerialized.Length);
-
-				await _wsClient.SendAsync(pincheckMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-
-				// wait for handshake response message from server
-				byte[] pincheckResponse = new byte[256];
-				WebSocketReceiveResult result = await _wsClient.ReceiveAsync(pincheckResponse, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-				if (result.MessageType == WebSocketMessageType.Close)
-				{
-					return false;
-				}
-
-				if ((result.Count < 2) || (pincheckResponse[0] != SHIPMessageType.CONTROL))
-				{
-					throw new Exception("Pincheck message expected!");
-				}
-
-				byte[] pincheckResponseMessageBuffer = new byte[result.Count - 1];
-				Buffer.BlockCopy(pincheckResponse, 1, pincheckResponseMessageBuffer, 0, result.Count - 1);
-
-				var settings = new JsonSerializerSettings
-				{
-					NullValueHandling = NullValueHandling.Include,
-					MissingMemberHandling = MissingMemberHandling.Error
-				};
-
-				string pincheckResponseMsg = Encoding.UTF8.GetString(pincheckResponseMessageBuffer);
-				pincheckResponseMsg = JsonFromEEBUSJson(pincheckResponseMsg);
-
-				SHIPPinCheckMessage pincheckMessageReceived = JsonConvert.DeserializeObject<SHIPPinCheckMessage>(pincheckResponseMsg, settings);
-				if (pincheckMessageReceived == null)
-				{
-					throw new Exception("Pincheck message parsing failed!");
-				}
-
-				if (pincheckMessageReceived.connectionPinState.pinState != PinStateType.none)
-				{
+				if (pincheckMessage.connectionPinState.pinState != PinStateType.none)
 					throw new Exception("Pinstate none expected!");
-				}
 
-				if (pincheckMessageReceived.connectionPinState.inputPermissionSpecified != false)
-				{
-					throw new Exception("Pinstate none expected!");
-				}
+				if (pincheckMessage.connectionPinState.inputPermissionSpecified != false)
+					throw new Exception("Pinstate inputPermissionSpecified expected!");
 
 				return true;
 			}
@@ -581,24 +402,14 @@ namespace EEBUS.Controllers
 				try
 				{
 					// send handshake error message
-					SHIPHandshakeErrorMessage handshakeErrorMessage = new SHIPHandshakeErrorMessage();
+					SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
 
 					if (ex.Message.Contains("mismatch"))
-					{
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
-					}
 					else
-					{
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.UNEXPECTED_MESSAGE;
-					}
 
-					byte[] handshakeMessageSerialized = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(handshakeErrorMessage));
-					byte[] handshakeMessageBuffer = new byte[handshakeMessageSerialized.Length + 1];
-
-					handshakeMessageBuffer[0] = SHIPMessageType.CONTROL;
-					Buffer.BlockCopy(handshakeMessageSerialized, 0, handshakeMessageBuffer, 1, handshakeMessageSerialized.Length);
-
-					await _wsClient.SendAsync(handshakeMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+                    await handshakeErrorMessage.Send(_wsClient);
 				}
 				catch (Exception innerEx)
 				{
@@ -614,72 +425,31 @@ namespace EEBUS.Controllers
 			try
 			{
 				// send access methods request message
-				AccessMethodsRequestMessage accessMethodsRequestMessage = new AccessMethodsRequestMessage();
+				SHIP.AccessMethodsRequestMessage accessMethodsRequestMessage = new SHIP.AccessMethodsRequestMessage();
+                await accessMethodsRequestMessage.Send(_wsClient);
 
-				byte[] accessMethodsRequestMessageSerialized = accessMethodsRequestMessage.ToJson();
-				byte[] accessMethodsRequestBuffer = new byte[accessMethodsRequestMessageSerialized.Length + 1];
+                // wait for handshake response message from server
+                accessMethodsRequestMessage = await SHIP.AccessMethodsRequestMessage.Receive(_wsClient);
+                if (accessMethodsRequestMessage == null)
+                {
+                    throw new Exception("Access methods request parsing failed!");
+                }
 
-				accessMethodsRequestBuffer[0] = SHIPMessageType.CONTROL;
-				Buffer.BlockCopy(accessMethodsRequestMessageSerialized, 0, accessMethodsRequestBuffer, 1, accessMethodsRequestMessageSerialized.Length);
-
-				await _wsClient.SendAsync(accessMethodsRequestBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-
-				// wait for handshake response message from server
-				byte[] accessMethodsRequestResponse = new byte[256];
-				WebSocketReceiveResult result = await _wsClient.ReceiveAsync(accessMethodsRequestResponse, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-				if (result.MessageType == WebSocketMessageType.Close)
-				{
-					return false;
-				}
-
-				if ((result.Count < 2) || (accessMethodsRequestResponse[0] != SHIPMessageType.CONTROL))
-				{
-					throw new Exception("Pincheck message expected!");
-				}
-
-				byte[] accessMethodsRequestMessageBuffer = new byte[result.Count - 1];
-				Buffer.BlockCopy(accessMethodsRequestResponse, 1, accessMethodsRequestMessageBuffer, 0, result.Count - 1);
-
-				var settings = new JsonSerializerSettings
-				{
-					NullValueHandling = NullValueHandling.Include,
-					MissingMemberHandling = MissingMemberHandling.Error
-				};
-
-				string accessMethodsRequestMsg = Encoding.UTF8.GetString(accessMethodsRequestMessageBuffer);
-				accessMethodsRequestMsg = JsonFromEEBUSJson(accessMethodsRequestMsg);
-
-				AccessMethodsRequestMessage accessMethodsRequestReceived = JsonConvert.DeserializeObject<AccessMethodsRequestMessage>(accessMethodsRequestMsg, settings);
-				if (accessMethodsRequestReceived == null)
-				{
-					throw new Exception("Access methods request parsing failed!");
-				}
-
-				return true;
+                return true;
 			}
 			catch (Exception ex)
 			{
 				try
 				{
 					// send handshake error message
-					SHIPHandshakeErrorMessage handshakeErrorMessage = new SHIPHandshakeErrorMessage();
+					SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
 
 					if (ex.Message.Contains("mismatch"))
-					{
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
-					}
 					else
-					{
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.UNEXPECTED_MESSAGE;
-					}
 
-					byte[] handshakeMessageSerialized = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(handshakeErrorMessage));
-					byte[] handshakeMessageBuffer = new byte[handshakeMessageSerialized.Length + 1];
-
-					handshakeMessageBuffer[0] = SHIPMessageType.CONTROL;
-					Buffer.BlockCopy(handshakeMessageSerialized, 0, handshakeMessageBuffer, 1, handshakeMessageSerialized.Length);
-
-					await _wsClient.SendAsync(handshakeMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+					await handshakeErrorMessage.Send(_wsClient);
 				}
 				catch (Exception innerEx)
 				{
@@ -695,47 +465,12 @@ namespace EEBUS.Controllers
 			try
 			{
 				// send access methods request message
-				AccessMethodsMessage accessMethodsMessage = new AccessMethodsMessage();
-                accessMethodsMessage.accessMethods.id = "Demo-CSharp-987654321";
+				SHIP.AccessMethodsMessage accessMethodsMessage = new SHIP.AccessMethodsMessage("Demo-CSharp-987654321");
 
-				byte[] accessMethodsMessageSerialized = accessMethodsMessage.ToJson();
-				byte[] accessMethodsBuffer = new byte[accessMethodsMessageSerialized.Length + 1];
+                await accessMethodsMessage.Send(_wsClient);
 
-				accessMethodsBuffer[0] = SHIPMessageType.CONTROL;
-				Buffer.BlockCopy(accessMethodsMessageSerialized, 0, accessMethodsBuffer, 1, accessMethodsMessageSerialized.Length);
-
-				await _wsClient.SendAsync(accessMethodsBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-
-				// wait for handshake response message from server
-				byte[] accessMethodsResponse = new byte[256];
-				WebSocketReceiveResult result = await _wsClient.ReceiveAsync(accessMethodsResponse, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-				if (result.MessageType == WebSocketMessageType.Close)
-				{
-					return false;
-				}
-
-				if ((result.Count < 2) || (accessMethodsResponse[0] != SHIPMessageType.CONTROL))
-				{
-					throw new Exception("Access methods message expected!");
-				}
-
-				byte[] accessMethodsMessageBuffer = new byte[result.Count - 1];
-				Buffer.BlockCopy(accessMethodsResponse, 1, accessMethodsMessageBuffer, 0, result.Count - 1);
-
-				var settings = new JsonSerializerSettings
-				{
-					NullValueHandling = NullValueHandling.Include,
-					MissingMemberHandling = MissingMemberHandling.Error
-				};
-
-				string accessMethodsMsg = Encoding.UTF8.GetString(accessMethodsMessageBuffer);
-				accessMethodsMsg = JsonFromEEBUSJson(accessMethodsMsg);
-
-				AccessMethodsMessage accessMethodsReceived = JsonConvert.DeserializeObject<AccessMethodsMessage>(accessMethodsMsg, settings);
-				if (accessMethodsReceived == null)
-				{
-					throw new Exception("Access methods request parsing failed!");
-				}
+                // wait for handshake response message from server
+                accessMethodsMessage = await SHIP.AccessMethodsMessage.Receive(_wsClient);
 
 				return true;
 			}
@@ -744,24 +479,14 @@ namespace EEBUS.Controllers
 				try
 				{
 					// send handshake error message
-					SHIPHandshakeErrorMessage handshakeErrorMessage = new SHIPHandshakeErrorMessage();
+					SHIP.ProtocolHandshakeErrorMessage handshakeErrorMessage = new SHIP.ProtocolHandshakeErrorMessage();
 
 					if (ex.Message.Contains("mismatch"))
-					{
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.SELECTION_MISMATCH;
-					}
 					else
-					{
 						handshakeErrorMessage.messageProtocolHandshakeError.error = SHIPHandshakeError.UNEXPECTED_MESSAGE;
-					}
 
-					byte[] handshakeMessageSerialized = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(handshakeErrorMessage));
-					byte[] handshakeMessageBuffer = new byte[handshakeMessageSerialized.Length + 1];
-
-					handshakeMessageBuffer[0] = SHIPMessageType.CONTROL;
-					Buffer.BlockCopy(handshakeMessageSerialized, 0, handshakeMessageBuffer, 1, handshakeMessageSerialized.Length);
-
-					await _wsClient.SendAsync(handshakeMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+                    await handshakeErrorMessage.Send(_wsClient);
 				}
 				catch (Exception innerEx)
 				{
@@ -780,47 +505,18 @@ namespace EEBUS.Controllers
                 if (_wsClient != null)
                 {
                     // send close message
-                    SHIPCloseMessage closeMessage = new SHIPCloseMessage();
-                    closeMessage.connectionClose[0].phase = ConnectionClosePhaseType.announce;
-
-                    byte[] closeMessageSerialized = closeMessage.ToJson();
-                    byte[] closeMessageBuffer = new byte[closeMessageSerialized.Length + 1];
-
-                    closeMessageBuffer[0] = SHIPMessageType.END;
-                    Buffer.BlockCopy(closeMessageSerialized, 0, closeMessageBuffer, 1, closeMessageSerialized.Length);
-
-                    await _wsClient.SendAsync(closeMessageBuffer, WebSocketMessageType.Binary, true, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
+                    SHIP.CloseMessage closeMessage = new SHIP.CloseMessage(ConnectionClosePhaseType.announce);
+                    await closeMessage.Send(_wsClient);
 
                     // wait for close response message from server
-                    byte[] closeResponse = new byte[1024];
-                    WebSocketReceiveResult result = await _wsClient.ReceiveAsync(closeResponse, new CancellationTokenSource(SHIPMessageTimeout.CMI_TIMEOUT).Token).ConfigureAwait(false);
-                    if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        return await Disconnect().ConfigureAwait(false);
-                    }
+                    closeMessage = await SHIP.CloseMessage.Receive(_wsClient);
 
-                    if ((result.Count < 2) || (closeResponse[0] != SHIPMessageType.END))
-                    {
-                        throw new Exception("Close message expected!");
-                    }
-
-                    byte[] closeResponseMessageBuffer = new byte[result.Count - 1];
-                    Buffer.BlockCopy(closeResponse, 1, closeResponseMessageBuffer, 0, result.Count - 1);
-
-                    var settings = new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Include,
-                        MissingMemberHandling = MissingMemberHandling.Error
-                    };
-
-                    string closeResponseMessage = Encoding.UTF8.GetString(closeResponseMessageBuffer);
-					SHIPCloseMessage closeMessageReceived = JsonConvert.DeserializeObject<SHIPCloseMessage>(closeResponseMessage, settings);
-                    if (closeMessageReceived == null)
+                    if (closeMessage == null)
                     {
                         throw new Exception("Close message parsing failed!");
                     }
 
-                    if (closeMessageReceived.connectionClose[0].phase != ConnectionClosePhaseType.confirm)
+                    if (closeMessage.connectionClose[0].phase != ConnectionClosePhaseType.confirm)
                     {
                         throw new Exception("Close confirmation message expected!");
                     }

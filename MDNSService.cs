@@ -1,5 +1,6 @@
 ﻿
 using Makaretu.Dns;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Net;
 using System.Security.Cryptography;
@@ -11,7 +12,7 @@ namespace EEBUS
 {
 	public class MDNSService
 	{
-        private ServiceProfile serviceProfile = new ServiceProfile("Demo-CSharp-987654321", "_ship._tcp", 50000);
+		private ServiceProfile serviceProfile = new EEBusServiceProfile(Dns.GetHostName(), "Demo-CSharp-987654321", "_ship._tcp", 50000);
 		private X509Certificate2 cert;
         private string localSKI;
 
@@ -63,6 +64,7 @@ namespace EEBUS
 				AddProperty("type",     "demo");
 				AddProperty("model",    "C# Tester");
 				AddProperty("serial",   "987654321");
+				AddProperty("host",     "10.211.55.28");
 
 				try
 				{
