@@ -1,6 +1,8 @@
-﻿using EEBUS.Enums;
+﻿using System.Text.Json.Serialization;
+
 using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
+
+using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {
@@ -8,16 +10,24 @@ namespace EEBUS.SHIP.Messages
 	{
 		static CloseMessage()
 		{
-			Register();
+			Register( new Class() );
 		}
 
 		public CloseMessage()
 		{
 		}
 
-		public CloseMessage(ConnectionClosePhaseType phase)
+		public CloseMessage( ConnectionClosePhaseType phase )
 		{
 			this.connectionClose[0].phase = phase;
+		}
+
+		public new class Class : JsonEndMessage<CloseMessage>.Class
+		{
+			public override CloseMessage Create( byte[] data )
+			{
+				return template.FromJsonVirtual( data );
+			}
 		}
 
 		public ConnectionCloseType[] connectionClose { get; set; } = new ConnectionCloseType[] { new ConnectionCloseType() };

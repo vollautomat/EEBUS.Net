@@ -1,6 +1,8 @@
-﻿using EEBUS.Enums;
-using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
+﻿using System;
+using System.Threading.Tasks;
+using System.Net.WebSockets;
+
+using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {
@@ -8,19 +10,38 @@ namespace EEBUS.SHIP.Messages
 	{
 		static AccessMethodsMessage()
 		{
-			Register();
+			Register( new Class() );
 		}
 
 		public AccessMethodsMessage()
 		{
 		}
 
-		public AccessMethodsMessage(string id)
+		public AccessMethodsMessage( string id )
 		{
 			this.accessMethods.id = id;
 		}
 
 		public AccessMethodsType accessMethods { get; set; } = new AccessMethodsType();
+		
+		public new class Class : JsonControlMessage<AccessMethodsMessage>.Class
+		{
+			public override AccessMethodsMessage Create( byte[] data )
+			{
+				return template.FromJsonVirtual( data );
+			} 			
+		}
+
+		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		{
+			if ( state == Server.State.WaitingForAccessMethods )
+			{
+				await Send( ws ).ConfigureAwait( false );
+				return (Server.State.WaitingForCloseInitOrData, Server.SubState.None);
+			}
+
+			throw new Exception( "Was waiting for AccessMethods" );
+		}
 	}
 
 	[System.SerializableAttribute()]

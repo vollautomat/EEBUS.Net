@@ -98,7 +98,7 @@ namespace EEBUS
 
             app.UseMiddleware<SHIPMiddleware>();
 
-			foreach (Type type in GetTypesInNamespace(typeof(Startup).Assembly, "EEBUS.SHIP.Messages"))
+			foreach ( Type type in GetTypesInNamespace( typeof( Startup ).Assembly, "EEBUS.SHIP.Messages" ) )
 			    System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(type.TypeHandle);
 
 			// start our mDNS services
@@ -106,11 +106,11 @@ namespace EEBUS
             mDNSService.Run();
         }
 
-		private Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
+		private Type[] GetTypesInNamespace( Assembly assembly, string nameSpace )
 		{
 			return
 			  assembly.GetTypes()
-					  .Where(t => String.Equals(t.Namespace, nameSpace, StringComparison.Ordinal))
+					  .Where( t => String.Equals( t.Namespace, nameSpace, StringComparison.Ordinal ) )
 					  .ToArray();
 		}
 	}

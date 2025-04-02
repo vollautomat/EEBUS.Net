@@ -1,6 +1,7 @@
-﻿using EEBUS.Enums;
-using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
+﻿using EEBUS.Messages;
+using System.Net.WebSockets;
+using System.Threading.Tasks;
+using System;
 
 namespace EEBUS.SHIP.Messages
 {
@@ -8,25 +9,44 @@ namespace EEBUS.SHIP.Messages
 	{
 		static DataMessage()
 		{
-			Register();
+			Register( new Class() );
 		}
 
 		public DataMessage()
 		{
 		}
 
-		public DataMessage(object payload)
+		public DataMessage( object payload )
 		{
 			this.data.payload = payload;
 		}
 
-		public DataMessage(string protocolId, object payload)
+		public DataMessage( string protocolId, object payload )
 		{
 			this.data.header.protocolId = protocolId;
 			this.data.payload = payload;
 		}
 
+		public new class Class : JsonDataMessage<DataMessage>.Class
+		{
+			public override DataMessage Create( byte[] data )
+			{
+				return template.FromJsonVirtual(data);
+			}
+		}
+
 		public DataType data { get; set; } = new DataType();
+
+		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		{
+			if ( state == Server.State.WaitingForCloseInitOrData )
+			{
+				await Send(ws).ConfigureAwait( false );
+				return (Server.State.WaitingForCloseInitOrData, Server.SubState.None);
+			}
+
+			throw new Exception( "Was waiting for Data" );
+		}
 	}
 
 	[System.SerializableAttribute()]
