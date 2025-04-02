@@ -73,6 +73,53 @@ namespace EEBUS.SHIP.Messages
 
 			throw new Exception( "Hello aborted!" );
 		}
+
+		//public override (Client.State, Client.SubState, string) Test( Client.State state )
+		//{
+		//	string		 error	  = null;
+		//	Client.State newState = state;
+
+		//	//if ( this.bytes[1] != SHIPMessageValue.CMI_HEAD )
+		//	//{
+		//	//	error = "Expected SMI_HEAD payload in INIT message!";
+		//	//	newState = Client.State.Stop;
+		//	//}
+
+		//	return (newState, Client.SubState.None, error);
+		//}
+
+#pragma warning disable CS1998
+		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+#pragma warning restore CS1998
+		{
+			if ( state == Client.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.ready )
+			{
+
+				ProtocolHandshakeMessage message = new ProtocolHandshakeMessage( ProtocolHandshakeTypeType.announceMax, 1, 0 );
+				await message.Send( ws ).ConfigureAwait( false );
+				return (Client.State.WaitingForProtocolHandshake, Client.SubState.None);
+			}
+
+			if ( state == Client.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && this.connectionHello.prolongationRequest && subState == Client.SubState.None )
+			{
+				await Resend( ws ).ConfigureAwait( false ) ;
+				return (Client.State.WaitingForConnectionHello, Client.SubState.FirstPending);
+			}
+
+			if ( state == Client.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && this.connectionHello.prolongationRequest && subState == Client.SubState.FirstPending )
+			{
+				await Resend( ws).ConfigureAwait( false );
+				return (Client.State.WaitingForConnectionHello, Client.SubState.SecondPending);
+			}
+
+			if ( state == Client.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && subState == Client.SubState.SecondPending )
+				return (Client.State.Stop, Client.SubState.None);
+
+			if ( state == Client.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.aborted )
+				return (Client.State.Stop, Client.SubState.None);
+
+			throw new Exception( "Was waiting for Init" );
+		}
 	}
 
 	[System.SerializableAttribute()]

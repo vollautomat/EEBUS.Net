@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 
@@ -51,6 +52,35 @@ namespace EEBUS.SHIP.Messages
 			{
 				await Send( ws ).ConfigureAwait( false );
 				return (Server.State.WaitingForConnectionHello, Server.SubState.None);
+			}
+
+			throw new Exception( "Was waiting for Init" );
+		}
+
+		public override (Client.State, Client.SubState, string) Test( Client.State state )
+		{
+			string		 error	  = null;
+			Client.State newState = state;
+
+			if ( this.bytes[1] != SHIPMessageValue.CMI_HEAD )
+			{
+				error = "Expected SMI_HEAD payload in INIT message!";
+				newState = Client.State.Stop;
+			}
+
+			return (newState, Client.SubState.None, error);
+		}
+
+#pragma warning disable CS1998
+		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subSate )
+#pragma warning restore CS1998
+		{
+			if ( state == Client.State.WaitingForInit || state == Client.State.WaitingForCloseInitOrData )
+			{
+				ConnectionHelloMessage message = new ConnectionHelloMessage( ConnectionHelloPhaseType.ready, 60000 );
+				await message.Send( ws ).ConfigureAwait( false );
+
+				return (Client.State.WaitingForConnectionHello, Client.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for Init" );

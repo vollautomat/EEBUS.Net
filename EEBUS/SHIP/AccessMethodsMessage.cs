@@ -42,6 +42,16 @@ namespace EEBUS.SHIP.Messages
 
 			throw new Exception( "Was waiting for AccessMethods" );
 		}
+
+		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+		{
+			if ( state == Client.State.WaitingForAccessMethods )
+			{
+				return (Client.State.Connected, Client.SubState.None);
+			}
+
+			throw new Exception( "Was waiting for AccessMethods" );
+		}
 	}
 
 	[System.SerializableAttribute()]

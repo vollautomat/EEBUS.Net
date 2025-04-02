@@ -32,9 +32,9 @@ namespace EEBUS.Messages
 			return (state, Server.SubState.None, null);
 		}
 
-		public virtual (Client.State, string) Test( Client.State state )
+		public virtual (Client.State, Client.SubState, string) Test( Client.State state )
 		{
-			return (state, null);
+			return (state, Client.SubState.None, null);
 		}
 
 #pragma warning disable CS1998
@@ -44,9 +44,11 @@ namespace EEBUS.Messages
 			return (Server.State.ErrorOrTimeout, Server.SubState.None);
 		}
 
-		public virtual Client.State NextState( Client.State state )
+#pragma warning disable CS1998
+		public virtual async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+#pragma warning restore CS1998
 		{
-			return Client.State.ErrorOrTimeout;
+			return (Client.State.ErrorOrTimeout, Client.SubState.None);
 		}
 
 		public abstract Task Send( WebSocket ws );

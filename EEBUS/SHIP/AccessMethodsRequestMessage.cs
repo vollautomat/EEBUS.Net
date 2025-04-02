@@ -37,6 +37,19 @@ namespace EEBUS.SHIP.Messages
 
 			throw new Exception( "Was waiting for AccessMethodsRequest" );
 		}
+
+		public override async Task<(Client.State, Client.SubState)> NextState(WebSocket ws, Client.State state, Client.SubState subState)
+		{
+			if ( state == Client.State.WaitingForAccessMethodsRequest )
+			{
+				AccessMethodsMessage method = new AccessMethodsMessage( "Demo-CSharp-987654321" );
+				await method.Send( ws ).ConfigureAwait( false );
+
+				return (Client.State.WaitingForAccessMethods, Client.SubState.None);
+			}
+
+			throw new Exception("Was waiting for PinCheckit");
+		}
 	}
 
 	[System.SerializableAttribute()]

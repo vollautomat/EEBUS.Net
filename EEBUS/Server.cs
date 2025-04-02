@@ -87,7 +87,7 @@ namespace EEBUS
 					if ( error != null )
 						Console.WriteLine( error );
 
-					(this.state, this.subState) = await message.NextState( this.ws, this.state, this.subState );
+					(this.state, this.subState) = await message.NextState( this.ws, this.state, this.subState ).ConfigureAwait( false );
 
 					if ( this.state == State.Stop )
 						throw new Exception( "Communication stopped!" );

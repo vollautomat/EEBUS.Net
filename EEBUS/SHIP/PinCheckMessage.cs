@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Newtonsoft.Json.Converters;
 
 using EEBUS.Messages;
+using System.Net;
 
 namespace EEBUS.SHIP.Messages
 {
@@ -62,7 +63,39 @@ namespace EEBUS.SHIP.Messages
 				return (Server.State.WaitingForAccessMethodsRequest, Server.SubState.None);
 			}
 
-			throw new Exception( "Was waiting for inPinCheckit" );
+			throw new Exception( "Was waiting for PinCheckit" );
+		}
+
+		public override (Client.State, Client.SubState, string) Test( Client.State state )
+		{
+			string		 error	  = null;
+			Client.State newState = state;
+
+			if ( this.connectionPinState.pinState != PinStateType.none )
+			{
+				error = "Pinstate none expected!";
+				newState = Client.State.Stop;
+			}
+			if (this.connectionPinState.inputPermissionSpecified != false)
+			{
+				error = "Pinstate inputPermissionSpecified expected!";
+				newState = Client.State.Stop;
+			}
+
+			return (newState, Client.SubState.None, error);
+		}
+	
+		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+		{
+			if ( state == Client.State.WaitingForPinCheck )
+			{
+				AccessMethodsRequestMessage method = new AccessMethodsRequestMessage();
+				await method.Send( ws ).ConfigureAwait( false );
+
+				return (Client.State.WaitingForAccessMethodsRequest, Client.SubState.None);
+			}
+
+			throw new Exception( "Was waiting for PinCheckit" );
 		}
 	}
 
