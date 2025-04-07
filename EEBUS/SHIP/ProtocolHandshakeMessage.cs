@@ -11,7 +11,7 @@ using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {
-	public class ProtocolHandshakeMessage : JsonControlMessage<ProtocolHandshakeMessage>
+	public class ProtocolHandshakeMessage : ShipControlMessage<ProtocolHandshakeMessage>
 	{
 		static ProtocolHandshakeMessage()
 		{
@@ -28,15 +28,15 @@ namespace EEBUS.SHIP.Messages
 			this.messageProtocolHandshake.version = new MessageProtocolHandshakeTypeVersion( major, minor );
 		}
 
-		public new class Class : JsonControlMessage<ProtocolHandshakeMessage>.Class
+		public new class Class : ShipControlMessage<ProtocolHandshakeMessage>.Class
 		{
-			public override ProtocolHandshakeMessage Create( byte[] data )
+			public override ProtocolHandshakeMessage Create( byte[] data, Server server )
 			{
-				return template.FromJsonVirtual(data);
+				return template.FromJsonVirtual( data, server );
 			}
 		}
 
-		public MessageProtocolHandshakeType messageProtocolHandshake { get; set; } = new MessageProtocolHandshakeType();
+		public MessageProtocolHandshakeType messageProtocolHandshake { get; set; } = new();
 
 		public bool IsEqual( ProtocolHandshakeMessage other )
 		{
@@ -140,7 +140,7 @@ namespace EEBUS.SHIP.Messages
 				newState	= Client.State.SendProtocolHandshakeConfirm;
 			}
 			
-			return (newState, Client.SubState.None, error);
+			return (newState, newSubState, error);
 		}
 
 #pragma warning disable CS1998
@@ -176,11 +176,11 @@ namespace EEBUS.SHIP.Messages
 	[System.SerializableAttribute()]
 	public class MessageProtocolHandshakeType
 	{
-		public ProtocolHandshakeTypeType handshakeType { get; set; } = new ProtocolHandshakeTypeType();
+		public ProtocolHandshakeTypeType handshakeType { get; set; } = new();
 
-		public MessageProtocolHandshakeTypeVersion version { get; set; } = new MessageProtocolHandshakeTypeVersion();
+		public MessageProtocolHandshakeTypeVersion version { get; set; } = new();
 
-		public MessageProtocolHandshakeTypeFormats formats { get; set; } = new MessageProtocolHandshakeTypeFormats( SHIPMessageFormat.JSON_UTF8 );
+		public MessageProtocolHandshakeTypeFormats formats { get; set; } = new( SHIPMessageFormat.JSON_UTF8 );
 
 		public bool IsEqual( MessageProtocolHandshakeType other )
 		{

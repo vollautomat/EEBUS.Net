@@ -1,5 +1,6 @@
 ﻿using EEBUS.Enums;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
@@ -10,13 +11,13 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace EEBUS.Messages
 {
-	public abstract class JsonMessage<T> : JsonMessageBase where T: JsonMessage<T>, new()
+	public abstract class ShipMessage<T> : ShipMessageBase where T: ShipMessage<T>, new()
 	{
-		public new abstract class Class : JsonMessageBase.Class
+		public new abstract class Class : ShipMessageBase.Class
 		{
 		}
 
-		static public JsonMessage<T> template = new T();
+		static public ShipMessage<T> template = new T();
 
 		private byte[] sentData;
 
@@ -30,20 +31,29 @@ namespace EEBUS.Messages
 			messages.Add( cmd, cls );
 		}
 
-		protected virtual byte[] ToJson()
+		public override string ToString()
 		{
 			var jsonSerializerSettings = new JsonSerializerSettings();
 			jsonSerializerSettings.Converters.Add( new Newtonsoft.Json.Converters.StringEnumConverter() );
 
-			return Encoding.UTF8.GetBytes( JsonConvert.SerializeObject( this, jsonSerializerSettings ) );
+			return JsonConvert.SerializeObject( this, jsonSerializerSettings );
 		}
 
-		public override T FromJsonVirtual( byte[] data )
+		protected virtual byte[] ToJson()
 		{
-			return FromJson( data );
+			JObject jobj = JObject.Parse( ToString() );
+
+			jobj = JsonIntoEEBUSJson( jobj );
+
+			return Encoding.UTF8.GetBytes( jobj.ToString( Formatting.None ) );
 		}
 
-		static public T FromJson( byte[] data )
+		public override T FromJsonVirtual( byte[] data, Server server )
+		{
+			return FromJson( data, server );
+		}
+
+		static public T FromJson( byte[] data, Server server )
 		{
 			var settings = new JsonSerializerSettings
 			{
@@ -57,7 +67,10 @@ namespace EEBUS.Messages
 			string dataStr = Encoding.UTF8.GetString( data );
 			dataStr = JsonFromEEBUSJson( data[0] == template.GetDataType() ? dataStr.Substring( 1 ) : dataStr );
 
-			return JsonConvert.DeserializeObject<T>( dataStr, settings );
+			T obj = JsonConvert.DeserializeObject<T>( dataStr, settings );
+			obj.server = server;
+
+			return obj;
 		}
 
 		public override async Task Send( WebSocket ws )
@@ -79,7 +92,7 @@ namespace EEBUS.Messages
 
 		static public async Task<T> Receive( WebSocket ws, int timeout = SHIPMessageTimeout.CMI_TIMEOUT )
 		{
-			byte[] msg = new byte[1024];
+			byte[] msg = new byte[10240];
 			WebSocketReceiveResult result = await ws.ReceiveAsync( msg, new CancellationTokenSource( timeout ).Token ).ConfigureAwait( false );
 			if ( result.MessageType == WebSocketMessageType.Close )
 				return null;
@@ -87,7 +100,7 @@ namespace EEBUS.Messages
 			if ( (result.Count < 2) || (msg[0] != template.GetDataType()) )
 				throw new Exception( $"Expected message of type {template.GetDataType()}!" );
 
-			return template.FromJsonVirtual( msg );
+			return template.FromJsonVirtual( msg, null );
 		}
 	}
 }

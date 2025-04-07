@@ -10,7 +10,7 @@ using System.Net;
 
 namespace EEBUS.SHIP.Messages
 {
-	public class PinCheckMessage : JsonControlMessage<PinCheckMessage>
+	public class PinCheckMessage : ShipControlMessage<PinCheckMessage>
 	{
 		static PinCheckMessage()
 		{
@@ -26,15 +26,15 @@ namespace EEBUS.SHIP.Messages
 			this.connectionPinState.pinState = pinState;
 		}
 
-		public new class Class : JsonControlMessage<PinCheckMessage>.Class
+		public new class Class : ShipControlMessage<PinCheckMessage>.Class
 		{
-			public override PinCheckMessage Create( byte[] data )
+			public override PinCheckMessage Create( byte[] data, Server server )
 			{
-				return template.FromJsonVirtual(data);
+				return template.FromJsonVirtual( data, server );
 			}
 		}
 
-		public ConnectionPinStateType connectionPinState { get; set; } = new ConnectionPinStateType();
+		public ConnectionPinStateType connectionPinState { get; set; } = new();
 
 		public override (Server.State, Server.SubState, string) Test( Server.State state )
 		{

@@ -6,7 +6,7 @@ using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {
-	public class AccessMethodsRequestMessage : JsonControlMessage<AccessMethodsRequestMessage>
+	public class AccessMethodsRequestMessage : ShipControlMessage<AccessMethodsRequestMessage>
 	{
 		static AccessMethodsRequestMessage()
 		{
@@ -17,15 +17,15 @@ namespace EEBUS.SHIP.Messages
 		{
 		}
 
-		public new class Class : JsonControlMessage<AccessMethodsRequestMessage>.Class
+		public new class Class : ShipControlMessage<AccessMethodsRequestMessage>.Class
 		{
-			public override AccessMethodsRequestMessage Create( byte[] data )
+			public override AccessMethodsRequestMessage Create( byte[] data, Server server )
 			{
-				return template.FromJsonVirtual( data );
+				return template.FromJsonVirtual( data, server );
 			}
 		}
 
-		public AccessMethodsRequestType accessMethodsRequest { get; set; } = new AccessMethodsRequestType();
+		public AccessMethodsRequestType accessMethodsRequest { get; set; } = new();
 	
 		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
 		{
@@ -42,13 +42,13 @@ namespace EEBUS.SHIP.Messages
 		{
 			if ( state == Client.State.WaitingForAccessMethodsRequest )
 			{
-				AccessMethodsMessage method = new AccessMethodsMessage( "Demo-CSharp-987654321" );
+				AccessMethodsMessage method = new AccessMethodsMessage( Client.Settings.Id );
 				await method.Send( ws ).ConfigureAwait( false );
 
 				return (Client.State.WaitingForAccessMethods, Client.SubState.None);
 			}
 
-			throw new Exception("Was waiting for PinCheckit");
+			throw new Exception( "Was waiting for PinCheckit" );
 		}
 	}
 

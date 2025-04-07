@@ -11,16 +11,20 @@ namespace EEBUS
 {
 	public class Client
 	{
-		public Client( string host, WebSocket ws )
+		public Client( string host, WebSocket ws, Settings settings )
 		{
 			this.host = host;
 			this.ws	  = ws;
+			
+			Client.settings = settings;
 		}
 
 		private string	  host;
 		private WebSocket ws;
 		private State	  state;
 		private SubState  subState;
+
+		static private Settings settings;
 
 		public enum State
 		{
@@ -48,6 +52,8 @@ namespace EEBUS
 			FormatMismatch
 		}
 
+		public static Settings Settings { get { return settings; } }
+
 		public async Task<bool> Connect()
 		{
 			this.state	  = State.WaitingForInit;
@@ -58,7 +64,7 @@ namespace EEBUS
 
 			while ( this.state != State.Connected )
 			{
-				byte[] receiveBuffer = new byte[1024];
+				byte[] receiveBuffer = new byte[10240];
 				WebSocketReceiveResult result = await this.ws.ReceiveAsync( receiveBuffer, new CancellationTokenSource( SHIPMessageTimeout.CMI_TIMEOUT ).Token ).ConfigureAwait( false );
 
 				if ( result.CloseStatus.HasValue )						
@@ -66,7 +72,7 @@ namespace EEBUS
 				else if ( result.Count < 2 )
 					throw new Exception( "Invalid EEBUS payload received, expected message size of at least 2!" );
 
-				JsonMessageBase message = JsonMessageBase.Create( receiveBuffer );					
+				ShipMessageBase message = ShipMessageBase.Create( receiveBuffer, null );					
 				if ( message == null )
 					throw new Exception( "Message couldn't be recognized" );
 

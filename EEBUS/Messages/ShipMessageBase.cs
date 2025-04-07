@@ -1,7 +1,9 @@
 ﻿using EEBUS.Enums;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -10,21 +12,23 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace EEBUS.Messages
 {
-	public abstract class JsonMessageBase
+	public abstract class ShipMessageBase
 	{
 		public abstract class Class
 		{
-			public abstract JsonMessageBase Create( byte[] data );
+			public abstract ShipMessageBase Create( byte[] data, Server server );
 		}
 
 		static protected Dictionary<string, Class> messages = new Dictionary<string, Class>();
 
-		public abstract JsonMessageBase FromJsonVirtual( byte[] data );
+		protected Server server;
 
-		static public JsonMessageBase Create( byte[] data )
+		public abstract ShipMessageBase FromJsonVirtual( byte[] data, Server server );
+
+		static public ShipMessageBase Create( byte[] data, Server server )
 		{
 			Class cls = GetClass( data );
-			return cls != null ? cls.Create( data ) : null;
+			return cls != null ? cls.Create( data, server ) : null;
 		}
 
 		public virtual (Server.State, Server.SubState, string) Test( Server.State state )
@@ -68,9 +72,14 @@ namespace EEBUS.Messages
 		static public Class GetClass( byte[] bytes )
 		{
 			string cmd = GetCommand( bytes );
+			return GetClass( cmd );
+		}
+
+		static public Class GetClass( string cmd )
+		{
 			if ( messages.TryGetValue( cmd, out Class cls ) )
 				return cls;
-			
+
 			return null;
 		}
 
@@ -82,6 +91,79 @@ namespace EEBUS.Messages
 			json = json.Replace( "[]", "{}" );
 
 			return json;
+		}
+
+		// convert json into the EEBUS json format
+		static protected JObject JsonIntoEEBUSJson( JObject jobj )
+		{
+			foreach ( JProperty prop in jobj.Properties() )
+			{
+				JToken  val = prop.Value;
+				JObject jo  = val as JObject;
+				JArray  ja  = val as JArray;
+
+				if ( null != jo )
+				{
+					if ( jo.Properties().Any() )
+					{
+						JArray replacement = ConvertToArray( jo );
+
+						if ( 0 < replacement.Count )
+							jo.Replace( replacement );
+					}
+				}
+				else if ( null != ja )
+				{
+					for ( int i = 0; i < ja.Count; i++ )
+					{
+						jo = ja[i] as JObject;
+						if ( null != jo )
+						{
+							if ( jo.Properties().Any() )
+							{
+								JArray replacement = ConvertToArray( jo );
+
+								if  ( 0 < replacement.Count )
+									jo.Replace( replacement );
+							}
+						}
+					}
+				}
+			}
+
+			return jobj;
+		}
+
+		static JArray ConvertToArray( JObject jo )
+		{
+			JArray replacement = new JArray();
+
+			foreach (JProperty p in jo.Properties())
+			{
+				if (p.Name == "datagram" && 1 == jo.Properties().Count() && p.Value is JObject)
+				{
+					JObject jp = JsonIntoEEBUSJson(p.Value as JObject);
+
+					JArray ja = new JArray();
+					foreach (JProperty pp in jp.Properties())
+					{
+						JObject jpp = new JObject();
+						jpp.Add(pp.Name, pp.Value);
+						ja.Add(jpp);
+					}
+
+					p.Value.Replace(ja);
+				}
+				else
+				{
+					JObject jp = new JObject();
+					jp.Add(p.Name, p.Value);
+					jp = JsonIntoEEBUSJson(jp);
+					replacement.Add(jp);
+				}
+			}
+
+			return replacement;
 		}
 	}
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace EEBUS
 {
@@ -35,25 +37,26 @@ namespace EEBUS
 
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices( IServiceCollection services )
         {
             services.AddControllersWithViews();
 
-            services.Configure<KestrelServerOptions>(kestrelOptions =>
+            services.Configure<KestrelServerOptions>( kestrelOptions =>
             {
-                kestrelOptions.ConfigureHttpsDefaults(httpOptions =>
+                kestrelOptions.ConfigureHttpsDefaults( httpOptions =>
                 {
-                    httpOptions.ServerCertificate = CertificateGenerator.GenerateCert(Dns.GetHostName());
-                    httpOptions.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+                    httpOptions.ServerCertificate           = CertificateGenerator.GenerateCert( Dns.GetHostName() );
+                    httpOptions.ClientCertificateMode       = ClientCertificateMode.RequireCertificate;
                     httpOptions.ClientCertificateValidation = ValidateClientCert;
-                    httpOptions.SslProtocols = SslProtocols.Tls12;
-                    httpOptions.OnAuthenticate = (connectionContext, authenticationOptions) =>
+                    httpOptions.SslProtocols                = SslProtocols.Tls12;
+                    httpOptions.OnAuthenticate              = (connectionContext, authenticationOptions) =>
                     {
                         authenticationOptions.EnabledSslProtocols = SslProtocols.Tls12;
                     };
-                });
-            });
-
+                } );
+            } );
+			services.Configure<Settings>( Configuration.GetSection( "Settings" ) );
+			
             services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate(options =>
             {
                 options.AllowedCertificateTypes = CertificateTypes.All;
@@ -61,13 +64,14 @@ namespace EEBUS
 
             services.AddAuthorization();
 
+            services.AddSingleton<Settings>();
             services.AddSingleton<MDNSClient>();
             services.AddSingleton<MDNSService>();
-            services.AddSingleton<SPINE>();
+            //services.AddSingleton<SPINE>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, MDNSClient mDNSClient, MDNSService mDNSService)
+        public void Configure( IApplicationBuilder app, IWebHostEnvironment env, MDNSClient mDNSClient, MDNSService mDNSService )
         {
             if (env.IsDevelopment())
             {
@@ -99,7 +103,10 @@ namespace EEBUS
             app.UseMiddleware<SHIPMiddleware>();
 
 			foreach ( Type type in GetTypesInNamespace( typeof( Startup ).Assembly, "EEBUS.SHIP.Messages" ) )
-			    System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+			    RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+
+            foreach ( Type type in GetTypesInNamespace( typeof( Startup ).Assembly, "EEBUS.SPINE.Commands" ) )
+			    RuntimeHelpers.RunClassConstructor(type.TypeHandle);
 
 			// start our mDNS services
 			mDNSClient.Run();
@@ -113,5 +120,16 @@ namespace EEBUS
 					  .Where( t => String.Equals( t.Namespace, nameSpace, StringComparison.Ordinal ) )
 					  .ToArray();
 		}
+	}
+	public class Settings
+	{
+		public string Name { get; set; }
+		public string Id { get; set; }
+		public string Model { get; set; }
+		public string Brand { get; set; }
+		public string Type { get; set; }
+		public string Serial { get; set; }
+		public string Host { get; set; }
+		public ushort Port { get; set; }
 	}
 }

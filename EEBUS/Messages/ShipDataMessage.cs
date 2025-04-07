@@ -2,9 +2,9 @@
 
 namespace EEBUS.Messages
 {
-	public class JsonDataMessage<T> : JsonMessage<T> where T : JsonDataMessage<T>, new()
+	public class ShipDataMessage<T> : ShipMessage<T> where T : ShipDataMessage<T>, new()
 	{
-		public new abstract class Class : JsonMessage<T>.Class
+		public new abstract class Class : ShipMessage<T>.Class
 		{
 		}
 

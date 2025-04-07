@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Models\EEBus_SPINE_TS_Datagram.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Makaretu.Dns.Multicast" Version="0.27.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.6" />
     <PackageReference Include="MQTTnet" Version="3.1.2" />
@@ -26,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="EEBUS\SPINE\" />
+    <None Include="Models\EEBus_SPINE_TS_Datagram.cs" />
   </ItemGroup>
 
 

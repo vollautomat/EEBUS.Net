@@ -5,7 +5,7 @@ using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {
-	public class ProtocolHandshakeErrorMessage : JsonControlMessage<ProtocolHandshakeErrorMessage>
+	public class ProtocolHandshakeErrorMessage : ShipControlMessage<ProtocolHandshakeErrorMessage>
 	{
 		static ProtocolHandshakeErrorMessage()
 		{
@@ -21,15 +21,15 @@ namespace EEBUS.SHIP.Messages
 			this.messageProtocolHandshakeError.error = error;
 		}
 
-		public new class Class : JsonControlMessage<ProtocolHandshakeErrorMessage>.Class
+		public new class Class : ShipControlMessage<ProtocolHandshakeErrorMessage>.Class
 		{
-			public override ProtocolHandshakeErrorMessage Create( byte[] data )
+			public override ProtocolHandshakeErrorMessage Create( byte[] data, Server server )
 			{
-				return template.FromJsonVirtual(data);
+				return template.FromJsonVirtual( data, server );
 			}
 		}
 
-		public MessageProtocolHandshakeErrorType messageProtocolHandshakeError { get; set; } = new MessageProtocolHandshakeErrorType();
+		public MessageProtocolHandshakeErrorType messageProtocolHandshakeError { get; set; } = new();
 
 #pragma warning disable CS1998
 		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )

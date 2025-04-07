@@ -1,6 +1,4 @@
 ﻿
-using Makaretu.Dns;
-using Microsoft.Extensions.Hosting;
 using System;
 using System.Net;
 using System.Security.Cryptography;
@@ -8,17 +6,30 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+
+using Makaretu.Dns;
+
 namespace EEBUS
 {
 	public class MDNSService
 	{
-		private ServiceProfile serviceProfile = new EEBusServiceProfile(Dns.GetHostName(), "Demo-CSharp-987654321", "_ship._tcp", 50000);
-		private X509Certificate2 cert;
-        private string localSKI;
-
-		public void AddProperty(string key, string value)
+        public MDNSService( IConfiguration configuration, IOptions<Settings> options )
         {
-            serviceProfile.AddProperty(key, value);
+            this.settings = options.Value;
+
+			this.serviceProfile = new EEBusServiceProfile( Dns.GetHostName(), settings.Id, "_ship._tcp", settings.Port );
+		}
+
+		private ServiceProfile    serviceProfile;
+		private X509Certificate2  cert;
+        private string            localSKI;
+		private readonly Settings settings;
+
+		public void AddProperty( string key, string value )
+        {
+            serviceProfile.AddProperty( key, value );
         }
 
         public X509Certificate2 Cert
@@ -39,51 +50,51 @@ namespace EEBUS
 
         public void Run()
         {
-            _ = Task.Run(async() =>
+            _ = Task.Run( async() =>
             {
                 Thread.CurrentThread.IsBackground = true;
 
                 MulticastService mdns = new MulticastService();
-                ServiceDiscovery sd = new ServiceDiscovery(mdns);
+                ServiceDiscovery sd = new ServiceDiscovery( mdns );
 
-				cert = CertificateGenerator.GenerateCert(Dns.GetHostName());
+				cert = CertificateGenerator.GenerateCert( Dns.GetHostName() );
 
-				byte[] hash = SHA1.Create().ComputeHash(cert.GetPublicKey());
-				string localSKI = this.localSKI = Convert.ToHexString(hash);
+				byte[] hash = SHA1.Create().ComputeHash( cert.GetPublicKey() );
+				string localSKI = this.localSKI = Convert.ToHexString( hash ).ToLowerInvariant();
 				// add spaces every 4 hex digits (EEBUS requirement)
-				for (int i = 4; i < this.localSKI.Length; i += 4)
-					this.localSKI = this.localSKI.Insert(i++, " ");
+				for ( int i = 4; i < this.localSKI.Length; i += 4 )
+					this.localSKI = this.localSKI.Insert( i++, " " );
 
 				// configure our EEBUS mDNS properties
-				AddProperty("name",     "C# EEBUS Demo");
-				AddProperty("id",       "ID:Demo-CSharp-987654321;");
-				AddProperty("path",     "/ship/");
-				AddProperty("register", "true");
-				AddProperty("ski",      localSKI);
-				AddProperty("brand",    "vollautomat");
-				AddProperty("type",     "demo");
-				AddProperty("model",    "C# Tester");
-				AddProperty("serial",   "987654321");
-				AddProperty("host",     "10.211.55.28");
+				AddProperty( "name",     this.settings.Name);
+				AddProperty( "id",       "ID:" + this.settings.Id + ";" );
+				AddProperty( "path",     "/ship/" );
+				AddProperty( "register", "true" );
+				AddProperty( "ski",      localSKI );
+				AddProperty( "brand",    this.settings.Brand);
+				AddProperty( "type",     this.settings.Type);
+				AddProperty( "model",    this.settings.Model);
+				AddProperty( "serial",   this.settings.Serial);
+				AddProperty( "host",     this.settings.Host );
 
 				try
 				{
                     mdns.Start();
 
-                    sd.Advertise(serviceProfile);
+                    sd.Advertise( serviceProfile );
 
-                    await Task.Delay(-1).ConfigureAwait(false);
+                    await Task.Delay( -1 ).ConfigureAwait( false );
                 }
-                catch (Exception ex)
+                catch ( Exception ex )
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine( ex.Message );
                 }
                 finally
                 {
                     sd.Dispose();
                     mdns.Stop();
                 }
-            });
+            } );
         }
     }
 }

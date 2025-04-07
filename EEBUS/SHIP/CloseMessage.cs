@@ -6,7 +6,7 @@ using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {
-	public class CloseMessage : JsonEndMessage<CloseMessage>
+	public class CloseMessage : ShipEndMessage<CloseMessage>
 	{
 		static CloseMessage()
 		{
@@ -22,15 +22,15 @@ namespace EEBUS.SHIP.Messages
 			this.connectionClose[0].phase = phase;
 		}
 
-		public new class Class : JsonEndMessage<CloseMessage>.Class
+		public new class Class : ShipEndMessage<CloseMessage>.Class
 		{
-			public override CloseMessage Create( byte[] data )
+			public override CloseMessage Create( byte[] data, Server server )
 			{
-				return template.FromJsonVirtual( data );
+				return template.FromJsonVirtual( data, server );
 			}
 		}
 
-		public ConnectionCloseType[] connectionClose { get; set; } = new ConnectionCloseType[] { new ConnectionCloseType() };
+		public ConnectionCloseType[] connectionClose { get; set; } = [new()];
 	}
 
 	[System.SerializableAttribute()]

@@ -8,7 +8,7 @@ using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {
-	public class InitMessage : JsonInitMessage<InitMessage>
+	public class InitMessage : ShipInitMessage<InitMessage>
 	{
 		static InitMessage()
 		{
@@ -19,11 +19,11 @@ namespace EEBUS.SHIP.Messages
 		{
 		}
 
-		public new class Class : JsonInitMessage<InitMessage>.Class
+		public new class Class : ShipInitMessage<InitMessage>.Class
 		{
-			public override InitMessage Create( byte[] data )
+			public override InitMessage Create( byte[] data, Server server )
 			{
-				return template.FromJsonVirtual( data );
+				return template.FromJsonVirtual( data, server );
 			}
 		}
 

@@ -1,12 +1,13 @@
 ﻿using EEBUS.Enums;
+using Microsoft.AspNetCore.Hosting.Server;
 using Newtonsoft.Json;
 using System.Text;
 
 namespace EEBUS.Messages
 {
-	public abstract class JsonInitMessage<T> : JsonMessage<T> where T : JsonInitMessage<T>, new()
+	public abstract class ShipInitMessage<T> : ShipMessage<T> where T : ShipInitMessage<T>, new()
 	{
-		public new abstract class Class : JsonMessage<T>.Class
+		public new abstract class Class : ShipMessage<T>.Class
 		{
 		}
 
@@ -22,12 +23,12 @@ namespace EEBUS.Messages
 			return new byte[] { SHIPMessageValue.CMI_HEAD };
 		}
 
-		public override T FromJsonVirtual( byte[] data )
+		public override T FromJsonVirtual( byte[] data, Server server )
 		{
-			return FromJson( data );
+			return FromJson( data, server );
 		}
 
-		static new public T FromJson( byte[] data )
+		static new public T FromJson( byte[] data, Server server )
 		{
 			T init = new T();
 

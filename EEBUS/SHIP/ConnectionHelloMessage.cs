@@ -9,7 +9,7 @@ using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {
-	public class ConnectionHelloMessage : JsonControlMessage<ConnectionHelloMessage>
+	public class ConnectionHelloMessage : ShipControlMessage<ConnectionHelloMessage>
 	{
 		static ConnectionHelloMessage()
 		{
@@ -31,15 +31,15 @@ namespace EEBUS.SHIP.Messages
 			this.connectionHello.waiting = waiting;
 		}
 
-		public new class Class : JsonControlMessage<ConnectionHelloMessage>.Class
+		public new class Class : ShipControlMessage<ConnectionHelloMessage>.Class
 		{
-			public override ConnectionHelloMessage Create( byte[] data )
+			public override ConnectionHelloMessage Create( byte[] data, Server server )
 			{
-				return template.FromJsonVirtual( data );
+				return template.FromJsonVirtual( data, server );
 			}
 		}
 
-		public ConnectionHelloType connectionHello { get; set; } = new ConnectionHelloType();
+		public ConnectionHelloType connectionHello { get; set; } = new();
 
 		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
 		{

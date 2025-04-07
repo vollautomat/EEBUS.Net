@@ -2,10 +2,12 @@
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 using System;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace EEBUS.SHIP.Messages
 {
-	public class DataMessage : JsonDataMessage<DataMessage>
+	public class DataMessage : ShipDataMessage<DataMessage>
 	{
 		static DataMessage()
 		{
@@ -16,33 +18,79 @@ namespace EEBUS.SHIP.Messages
 		{
 		}
 
-		public DataMessage( object payload )
+		public DataMessage( JObject payload )
 		{
 			this.data.payload = payload;
 		}
 
-		public DataMessage( string protocolId, object payload )
+		public DataMessage( string protocolId, JObject payload )
 		{
 			this.data.header.protocolId = protocolId;
-			this.data.payload = payload;
+			this.data.payload			= payload;
 		}
 
-		public new class Class : JsonDataMessage<DataMessage>.Class
+		public DataMessage( SpineDatagramPayload datagram )
 		{
-			public override DataMessage Create( byte[] data )
+			this.data.payload = JObject.FromObject( datagram );
+		}
+
+		public new class Class : ShipDataMessage<DataMessage>.Class
+		{
+			public override DataMessage Create( byte[] data, Server server )
 			{
-				return template.FromJsonVirtual(data);
+				DataMessage dm = template.FromJsonVirtual( data, server );
+				return dm;
 			}
 		}
 
-		public DataType data { get; set; } = new DataType();
+		public DataType		  data { get; set; } = new();
+		
+		static private object mutex = new();
+		static private ulong  count = 1; 
+
+		static public ulong NextCount
+		{
+			get
+			{
+				lock ( mutex )
+				{
+					return count++;
+				}
+			}
+		}
+
+		public void SetPayload( JObject payload )
+		{
+			this.data.payload = payload;
+		}
 
 		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
 		{
 			if ( state == Server.State.WaitingForCloseInitOrData )
 			{
-				await Send(ws).ConfigureAwait( false );
-				return (Server.State.WaitingForCloseInitOrData, Server.SubState.None);
+				if ( this.data.payload.ContainsKey( "datagram" ) )
+				{
+					SpineDatagramPayload datagram = this.data.payload.ToObject<SpineDatagramPayload>();
+					SpineDatagramPayload answer = datagram.CreateAnswer( NextCount, this.server );
+
+					if ( null != answer )
+					{
+						DataMessage reply = new DataMessage( answer );
+						if ( null != reply )
+						{
+							await reply.Send( ws ).ConfigureAwait( false );
+							return (Server.State.WaitingForCloseInitOrData, Server.SubState.None);
+						}
+						else
+						{
+							GetType();
+						}
+					}
+					else
+					{
+						GetType();
+					}
+				}
 			}
 
 			throw new Exception( "Was waiting for Data" );
@@ -52,10 +100,11 @@ namespace EEBUS.SHIP.Messages
 	[System.SerializableAttribute()]
 	public class DataType
 	{
-		public HeaderType header { get; set; } = new HeaderType();
+		public HeaderType header { get; set; } = new();
 
-		public object payload { get; set; }
+		public JObject payload { get; set; }
 
+		[JsonProperty( NullValueHandling = NullValueHandling.Ignore )]
 		public ExtensionType extension { get; set; }
 	}
 
@@ -63,7 +112,7 @@ namespace EEBUS.SHIP.Messages
 	[System.SerializableAttribute()]
 	public class HeaderType
 	{
-		public string protocolId { get; set; }
+		public string protocolId { get; set; } = "ee1.0";
 	}
 
 	[System.SerializableAttribute()]

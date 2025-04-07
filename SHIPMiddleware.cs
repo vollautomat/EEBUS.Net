@@ -5,16 +5,19 @@ using System.IO;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 
 namespace EEBUS
 {
 	public class SHIPMiddleware
     {
         private readonly RequestDelegate next;
+        private readonly Settings        settings;
 
-        public SHIPMiddleware( RequestDelegate next )
+        public SHIPMiddleware( RequestDelegate next, IOptions<Settings> options )
         {
-            this.next = next;
+            this.next     = next;
+            this.settings = options.Value;
         }
 
         public async Task Invoke( HttpContext httpContext )
@@ -44,7 +47,7 @@ namespace EEBUS
                     return;
                 }
 
-                server = new Server( httpContext.Request.Host.Host, socket );
+                server = new Server( httpContext.Request.Host.Host, socket, this.settings );
                 await server.Do().ConfigureAwait(false);
             }
             catch ( Exception ex )
