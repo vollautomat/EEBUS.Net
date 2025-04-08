@@ -13,7 +13,7 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdNodeManagementUseCaseDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Server server )
+			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
 			{
 				NodeManagementUseCaseData	  payload = new NodeManagementUseCaseData();
 				NodeManagementUseCaseDataType data	  = payload.cmd[0].nodeManagementUseCaseData;

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using EEBUS.Models;
 using EEBUS.SHIP.Messages;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace EEBUS.Controllers
 {
@@ -120,7 +121,7 @@ namespace EEBUS.Controllers
                 {
                     Client client = new Client( model.Url, wsClient, this.settings );
 
-                    await client.Connect().ConfigureAwait( false );
+                    await client.Run().ConfigureAwait( false );
 					
                     return View( "Connected", model );
                 }
@@ -131,6 +132,7 @@ namespace EEBUS.Controllers
             }
             catch ( Exception ex )
             {
+                Debug.WriteLine( ex.Message );
                 return await Disconnect( ex.Message ).ConfigureAwait( false );
             }
         }

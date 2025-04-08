@@ -19,33 +19,33 @@ namespace EEBUS.SHIP.Messages
 
 		public new class Class : ShipControlMessage<AccessMethodsRequestMessage>.Class
 		{
-			public override AccessMethodsRequestMessage Create( byte[] data, Server server )
+			public override AccessMethodsRequestMessage Create( byte[] data, Connection connection )
 			{
-				return template.FromJsonVirtual( data, server );
+				return template.FromJsonVirtual( data, connection );
 			}
 		}
 
 		public AccessMethodsRequestType accessMethodsRequest { get; set; } = new();
 	
-		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
 		{
-			if ( state == Server.State.WaitingForAccessMethodsRequest )
+			if ( state == Connection.State.WaitingForAccessMethodsRequest )
 			{
 				await Send( ws ).ConfigureAwait( false );
-				return (Server.State.WaitingForAccessMethods, Server.SubState.None);
+				return (Connection.State.WaitingForAccessMethods, Connection.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for AccessMethodsRequest" );
 		}
 
-		public override async Task<(Client.State, Client.SubState)> NextState(WebSocket ws, Client.State state, Client.SubState subState)
+		public override async Task<(Connection.State, Connection.SubState)> NextClientState(WebSocket ws, Connection.State state, Connection.SubState subState)
 		{
-			if ( state == Client.State.WaitingForAccessMethodsRequest )
+			if ( state == Connection.State.WaitingForAccessMethodsRequest )
 			{
 				AccessMethodsMessage method = new AccessMethodsMessage( Client.Settings.Id );
 				await method.Send( ws ).ConfigureAwait( false );
 
-				return (Client.State.WaitingForAccessMethods, Client.SubState.None);
+				return (Connection.State.WaitingForAccessMethods, Connection.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for PinCheckit" );

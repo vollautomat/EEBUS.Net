@@ -13,7 +13,7 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdLoadControlLimitListDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Server server )
+			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
 			{
 				LoadControlLimitListData	 payload = new LoadControlLimitListData();
 				LoadControlLimitListDataType data	 = payload.cmd[0].loadControlLimitListData;

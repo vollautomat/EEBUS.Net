@@ -17,9 +17,9 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdDeviceDiagnosisHeartbeatDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Server server )
+			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
 			{
-				server.SetHeartbeatAddresses( header.addressSource, header.addressDestination );
+				connection.SetHeartbeatAddresses( header.addressSource, header.addressDestination );
 
 				DeviceDiagnosisHeartbeatData	 payload = new DeviceDiagnosisHeartbeatData();
 				DeviceDiagnosisHeartbeatDataType data	 = payload.cmd[0].deviceDiagnosisHeartbeatData;

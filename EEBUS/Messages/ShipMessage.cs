@@ -48,12 +48,12 @@ namespace EEBUS.Messages
 			return Encoding.UTF8.GetBytes( jobj.ToString( Formatting.None ) );
 		}
 
-		public override T FromJsonVirtual( byte[] data, Server server )
+		public override T FromJsonVirtual( byte[] data, Connection connection )
 		{
-			return FromJson( data, server );
+			return FromJson( data, connection );
 		}
 
-		static public T FromJson( byte[] data, Server server )
+		static public T FromJson( byte[] data, Connection connection )
 		{
 			var settings = new JsonSerializerSettings
 			{
@@ -68,7 +68,7 @@ namespace EEBUS.Messages
 			dataStr = JsonFromEEBUSJson( data[0] == template.GetDataType() ? dataStr.Substring( 1 ) : dataStr );
 
 			T obj = JsonConvert.DeserializeObject<T>( dataStr, settings );
-			obj.server = server;
+			obj.connection = connection;
 
 			return obj;
 		}

@@ -13,7 +13,7 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdResultDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Server server )
+			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
 			{
 				return null;
 			}

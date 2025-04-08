@@ -16,43 +16,41 @@ namespace EEBUS.Messages
 	{
 		public abstract class Class
 		{
-			public abstract ShipMessageBase Create( byte[] data, Server server );
+			public abstract ShipMessageBase Create( byte[] data, Connection connection );
 		}
 
 		static protected Dictionary<string, Class> messages = new Dictionary<string, Class>();
 
-		protected Server server;
+		protected Connection connection;
 
-		public abstract ShipMessageBase FromJsonVirtual( byte[] data, Server server );
+		public abstract ShipMessageBase FromJsonVirtual( byte[] data, Connection connection );
 
-		static public ShipMessageBase Create( byte[] data, Server server )
+		static public ShipMessageBase Create( byte[] data, Connection connection )
 		{
 			Class cls = GetClass( data );
-			return cls != null ? cls.Create( data, server ) : null;
+			return cls != null ? cls.Create( data, connection ) : null;
 		}
 
-		public virtual (Server.State, Server.SubState, string) Test( Server.State state )
+		public virtual (Connection.State, Connection.SubState, string) ServerTest( Connection.State state )
 		{
-			return (state, Server.SubState.None, null);
+			return (state, Connection.SubState.None, null);
 		}
 
-		public virtual (Client.State, Client.SubState, string) Test( Client.State state )
+		public virtual (Connection.State, Connection.SubState, string) ClientTest( Connection.State state )
 		{
-			return (state, Client.SubState.None, null);
-		}
-
-#pragma warning disable CS1998
-		public virtual async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
-#pragma warning restore CS1998
-		{
-			return (Server.State.ErrorOrTimeout, Server.SubState.None);
+			return (state, Connection.SubState.None, null);
 		}
 
 #pragma warning disable CS1998
-		public virtual async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+		public virtual async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
 #pragma warning restore CS1998
 		{
-			return (Client.State.ErrorOrTimeout, Client.SubState.None);
+			return (Connection.State.ErrorOrTimeout, Connection.SubState.None);
+		}
+
+		public virtual async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		{
+			return await NextServerState( ws, state, subState );
 		}
 
 		public abstract Task Send( WebSocket ws );

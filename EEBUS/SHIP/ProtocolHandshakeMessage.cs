@@ -30,9 +30,9 @@ namespace EEBUS.SHIP.Messages
 
 		public new class Class : ShipControlMessage<ProtocolHandshakeMessage>.Class
 		{
-			public override ProtocolHandshakeMessage Create( byte[] data, Server server )
+			public override ProtocolHandshakeMessage Create( byte[] data, Connection connection )
 			{
-				return template.FromJsonVirtual( data, server );
+				return template.FromJsonVirtual( data, connection );
 			}
 		}
 
@@ -43,130 +43,130 @@ namespace EEBUS.SHIP.Messages
 			return this.messageProtocolHandshake.IsEqual( other.messageProtocolHandshake );
 		}
 
-		public override (Server.State, Server.SubState, string) Test( Server.State state )
+		public override (Connection.State, Connection.SubState, string) ServerTest( Connection.State state )
 		{
 			string			error		= null;
-			Server.State	newState	= state;
-			Server.SubState	newSubState = Server.SubState.None;
+			Connection.State	newState	= state;
+			Connection.SubState	newSubState = Connection.SubState.None;
 
-			if ( state == Server.State.WaitingForProtocolHandshake && this.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.announceMax )
+			if ( state == Connection.State.WaitingForProtocolHandshake && this.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.announceMax )
 			{
 				error		= "Protocol version max announcement expected!";
-				newState	= Server.State.SendProtocolHandshakeError;
-				newSubState	= Server.SubState.UnexpectedMessage;
+				newState	= Connection.State.SendProtocolHandshakeError;
+				newSubState	= Connection.SubState.UnexpectedMessage;
 			}
-			else if ( state == Server.State.WaitingForProtocolHandshakeConfirm && this.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.select )
+			else if ( state == Connection.State.WaitingForProtocolHandshakeConfirm && this.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.select )
 			{
 				error		= "Protocol format mismatch!";
-				newState	= Server.State.SendProtocolHandshakeError;
-				newSubState	= Server.SubState.FormatMismatch;
+				newState	= Connection.State.SendProtocolHandshakeError;
+				newSubState	= Connection.SubState.FormatMismatch;
 			}
 			else if ( this.messageProtocolHandshake.version.major != 1 && this.messageProtocolHandshake.version.minor != 0 )
 			{
 				error		= "Protocol version mismatch!";
-				newState	= Server.State.SendProtocolHandshakeError;
-				newSubState	= Server.SubState.FormatMismatch;
+				newState	= Connection.State.SendProtocolHandshakeError;
+				newSubState	= Connection.SubState.FormatMismatch;
 			}
 			else if ( (this.messageProtocolHandshake.formats.format.Length == 0) || (this.messageProtocolHandshake.formats.format[0] != SHIPMessageFormat.JSON_UTF8) )
 			{
 				error		= "Protocol format mismatch!";
-				newState	= Server.State.SendProtocolHandshakeError;
-				newSubState	= Server.SubState.FormatMismatch;
+				newState	= Connection.State.SendProtocolHandshakeError;
+				newSubState	= Connection.SubState.FormatMismatch;
 			}
 
 			return (newState, newSubState, error);
 		}
 
-		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
 		{
-			if ( state == Server.State.WaitingForProtocolHandshake )
+			if ( state == Connection.State.WaitingForProtocolHandshake )
 			{
 				this.messageProtocolHandshake.handshakeType = ProtocolHandshakeTypeType.select;
 				await Send( ws ).ConfigureAwait( false );
-				return (Server.State.SendProtocolHandshakeConfirm, Server.SubState.None);
+				return (Connection.State.SendProtocolHandshakeConfirm, Connection.SubState.None);
 			}
-			else if ( state == Server.State.SendProtocolHandshakeConfirm )
+			else if ( state == Connection.State.SendProtocolHandshakeConfirm )
 			{
-				return (Server.State.WaitingForPinCheck, Server.SubState.None);
+				return (Connection.State.WaitingForPinCheck, Connection.SubState.None);
 			}
-			else if ( state == Server.State.SendProtocolHandshakeError && subState == Server.SubState.FormatMismatch )
+			else if ( state == Connection.State.SendProtocolHandshakeError && subState == Connection.SubState.FormatMismatch )
 			{
 				ProtocolHandshakeErrorMessage message = new ProtocolHandshakeErrorMessage( SHIPHandshakeError.SELECTION_MISMATCH );
 				await message.Send( ws ).ConfigureAwait( false );
-				return await message.NextState( ws, state, subState ).ConfigureAwait( false );
+				return await message.NextServerState( ws, state, subState ).ConfigureAwait( false );
 			}
-			else if ( state == Server.State.SendProtocolHandshakeError &&  subState == Server.SubState.UnexpectedMessage )
+			else if ( state == Connection.State.SendProtocolHandshakeError &&  subState == Connection.SubState.UnexpectedMessage )
 			{
 				ProtocolHandshakeErrorMessage message = new ProtocolHandshakeErrorMessage( SHIPHandshakeError.UNEXPECTED_MESSAGE );
 				await message.Send( ws ).ConfigureAwait( false );
-				return await message.NextState( ws, state, subState ).ConfigureAwait( false );
+				return await message.NextServerState( ws, state, subState ).ConfigureAwait( false );
 			}
 
 			throw new Exception( "ProtocolHandshake aborted!" );
 		}
 
-		public override (Client.State, Client.SubState, string) Test( Client.State state )
+		public override (Connection.State, Connection.SubState, string) ClientTest( Connection.State state )
 		{
 			string			error		= null;
-			Client.State	newState	= state;
-			Client.SubState newSubState	= Client.SubState.None;
+			Connection.State	newState	= state;
+			Connection.SubState newSubState	= Connection.SubState.None;
 
-			if ( state == Client.State.WaitingForProtocolHandshake && this.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.select )
+			if ( state == Connection.State.WaitingForProtocolHandshake && this.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.select )
 			{
 				error		= "Protocol version selection expected!";
-				newState	= Client.State.SendProtocolHandshakeError;
-				newSubState	= Client.SubState.UnexpectedMessage;
+				newState	= Connection.State.SendProtocolHandshakeError;
+				newSubState	= Connection.SubState.UnexpectedMessage;
 			}
-			else if (state == Client.State.WaitingForProtocolHandshakeConfirm && this.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.select)
+			else if (state == Connection.State.WaitingForProtocolHandshakeConfirm && this.messageProtocolHandshake.handshakeType != ProtocolHandshakeTypeType.select)
 			{
 				error		= "Protocol format mismatch!";
-				newState	= Client.State.SendProtocolHandshakeError;
-				newSubState	= Client.SubState.FormatMismatch;
+				newState	= Connection.State.SendProtocolHandshakeError;
+				newSubState	= Connection.SubState.FormatMismatch;
 			}
 			else if ( this.messageProtocolHandshake.version.major != 1 && this.messageProtocolHandshake.version.minor != 0 )
 			{
 				error		= "Protocol version mismatch!";
-				newState	= Client.State.SendProtocolHandshakeError;
-				newSubState	= Client.SubState.FormatMismatch;
+				newState	= Connection.State.SendProtocolHandshakeError;
+				newSubState	= Connection.SubState.FormatMismatch;
 			}
 			else if ((this.messageProtocolHandshake.formats.format.Length == 0) || (this.messageProtocolHandshake.formats.format[0] != SHIPMessageFormat.JSON_UTF8))
 			{
 				error		= "Protocol format mismatch!";
-				newState	= Client.State.SendProtocolHandshakeError;
-				newSubState	= Client.SubState.FormatMismatch;
+				newState	= Connection.State.SendProtocolHandshakeError;
+				newSubState	= Connection.SubState.FormatMismatch;
 			}
 			else
 			{
-				newState	= Client.State.SendProtocolHandshakeConfirm;
+				newState	= Connection.State.SendProtocolHandshakeConfirm;
 			}
 			
 			return (newState, newSubState, error);
 		}
 
 #pragma warning disable CS1998
-		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
 #pragma warning restore CS1998
 		{
-			if ( state == Client.State.SendProtocolHandshakeConfirm)
+			if ( state == Connection.State.SendProtocolHandshakeConfirm)
 			{
 				this.messageProtocolHandshake.handshakeType = ProtocolHandshakeTypeType.select;
 				await Send( ws ).ConfigureAwait( false );
 
 				PinCheckMessage message = new PinCheckMessage( PinStateType.none );
 				await message.Send( ws ).ConfigureAwait( false );
-				return (Client.State.WaitingForPinCheck, Client.SubState.None);
+				return (Connection.State.WaitingForPinCheck, Connection.SubState.None);
 			}
-			else if ( state == Client.State.SendProtocolHandshakeError && subState == Client.SubState.FormatMismatch )
+			else if ( state == Connection.State.SendProtocolHandshakeError && subState == Connection.SubState.FormatMismatch )
 			{
 				ProtocolHandshakeErrorMessage message = new ProtocolHandshakeErrorMessage( SHIPHandshakeError.SELECTION_MISMATCH );
 				await message.Send( ws ).ConfigureAwait( false );
-				return await message.NextState( ws, state, subState ).ConfigureAwait( false );
+				return await message.NextClientState( ws, state, subState ).ConfigureAwait( false );
 			}
-			else if ( state == Client.State.SendProtocolHandshakeError &&  subState == Client.SubState.UnexpectedMessage )
+			else if ( state == Connection.State.SendProtocolHandshakeError &&  subState == Connection.SubState.UnexpectedMessage )
 			{
 				ProtocolHandshakeErrorMessage message = new ProtocolHandshakeErrorMessage( SHIPHandshakeError.UNEXPECTED_MESSAGE );
 				await message.Send( ws ).ConfigureAwait( false );
-				return await message.NextState( ws, state, subState ).ConfigureAwait( false );
+				return await message.NextClientState( ws, state, subState ).ConfigureAwait( false );
 			}
 
 			throw new Exception( "ProtocolHandshake aborted!" );

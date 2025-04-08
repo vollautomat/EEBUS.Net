@@ -14,7 +14,7 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdDeviceConfigurationKeyValueListDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Server server )
+			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
 			{
 				DeviceConfigurationKeyValueListData	    payload = new DeviceConfigurationKeyValueListData();
 				DeviceConfigurationKeyValueListDataType data	= payload.cmd[0].deviceConfigurationKeyValueListData;

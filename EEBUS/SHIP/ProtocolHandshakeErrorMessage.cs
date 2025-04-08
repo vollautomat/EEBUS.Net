@@ -23,26 +23,26 @@ namespace EEBUS.SHIP.Messages
 
 		public new class Class : ShipControlMessage<ProtocolHandshakeErrorMessage>.Class
 		{
-			public override ProtocolHandshakeErrorMessage Create( byte[] data, Server server )
+			public override ProtocolHandshakeErrorMessage Create( byte[] data, Connection connection )
 			{
-				return template.FromJsonVirtual( data, server );
+				return template.FromJsonVirtual( data, connection );
 			}
 		}
 
 		public MessageProtocolHandshakeErrorType messageProtocolHandshakeError { get; set; } = new();
 
 #pragma warning disable CS1998
-		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
 #pragma warning restore CS1998
 		{
-			return (Server.State.Stop, Server.SubState.None);
+			return (Connection.State.Stop, Connection.SubState.None);
 		}
 
 #pragma warning disable CS1998
-		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
 #pragma warning restore CS1998
 		{
-			return (Client.State.Stop, Client.SubState.None);
+			return (Connection.State.Stop, Connection.SubState.None);
 		}
 	}
 

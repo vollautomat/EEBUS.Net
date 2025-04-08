@@ -21,66 +21,66 @@ namespace EEBUS.SHIP.Messages
 
 		public new class Class : ShipInitMessage<InitMessage>.Class
 		{
-			public override InitMessage Create( byte[] data, Server server )
+			public override InitMessage Create( byte[] data, Connection connection )
 			{
-				return template.FromJsonVirtual( data, server );
+				return template.FromJsonVirtual( data, connection );
 			}
 		}
 
 		public override byte[] bytes { get; set; } = { SHIPMessageType.INIT, SHIPMessageValue.CMI_HEAD };
 
 
-		public override (Server.State, Server.SubState, string) Test( Server.State state )
+		public override (Connection.State, Connection.SubState, string) ServerTest( Connection.State state )
 		{
 			string		 error	  = null;
-			Server.State newState = state;
+			Connection.State newState = state;
 
 			if ( this.bytes[1] != SHIPMessageValue.CMI_HEAD )
 			{
 				error = "Expected SMI_HEAD payload in INIT message!";
-				newState = Server.State.Stop;
+				newState = Connection.State.Stop;
 			}
 
-			return (newState, Server.SubState.None, error);
+			return (newState, Connection.SubState.None, error);
 		}
 
 #pragma warning disable CS1998
-		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
 #pragma warning restore CS1998
 		{
-			if ( state == Server.State.WaitingForInit || state == Server.State.WaitingForCloseInitOrData )
+			if ( state == Connection.State.WaitingForInit || state == Connection.State.Connected )
 			{
 				await Send( ws ).ConfigureAwait( false );
-				return (Server.State.WaitingForConnectionHello, Server.SubState.None);
+				return (Connection.State.WaitingForConnectionHello, Connection.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for Init" );
 		}
 
-		public override (Client.State, Client.SubState, string) Test( Client.State state )
+		public override (Connection.State, Connection.SubState, string) ClientTest( Connection.State state )
 		{
 			string		 error	  = null;
-			Client.State newState = state;
+			Connection.State newState = state;
 
 			if ( this.bytes[1] != SHIPMessageValue.CMI_HEAD )
 			{
 				error = "Expected SMI_HEAD payload in INIT message!";
-				newState = Client.State.Stop;
+				newState = Connection.State.Stop;
 			}
 
-			return (newState, Client.SubState.None, error);
+			return (newState, Connection.SubState.None, error);
 		}
 
 #pragma warning disable CS1998
-		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subSate )
+		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subSate )
 #pragma warning restore CS1998
 		{
-			if ( state == Client.State.WaitingForInit || state == Client.State.WaitingForCloseInitOrData )
+			if ( state == Connection.State.WaitingForInit || state == Connection.State.Connected )
 			{
 				ConnectionHelloMessage message = new ConnectionHelloMessage( ConnectionHelloPhaseType.ready, 60000 );
 				await message.Send( ws ).ConfigureAwait( false );
 
-				return (Client.State.WaitingForConnectionHello, Client.SubState.None);
+				return (Connection.State.WaitingForConnectionHello, Connection.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for Init" );

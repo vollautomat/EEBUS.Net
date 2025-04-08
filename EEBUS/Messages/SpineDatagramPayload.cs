@@ -29,7 +29,7 @@ namespace EEBUS.Messages
 			}
 		}
 
-		public SpineDatagramPayload CreateAnswer( ulong counter, Server server )
+		public SpineDatagramPayload CreateAnswer( ulong counter, Connection connection )
 		{
 			if ( ! this.datagram.payload.TryGetValue( "cmd", out JToken cmds ) )
 				return null;
@@ -56,7 +56,7 @@ namespace EEBUS.Messages
 			reply.datagram.header.cmdClassifier		  = GetAnswerCmdClassifier();
 			reply.datagram.header.ackRequest		  = cls.GetAnswerAckRequest();
 
-			SpineCmdPayloadBase payload = cls.CreateAnswer( reply.datagram.header, server );
+			SpineCmdPayloadBase payload = cls.CreateAnswer( reply.datagram.header, connection );
 			if ( null == payload )
 				return null;
 

@@ -13,7 +13,7 @@ namespace EEBUS.Messages
 
 		public abstract class Class
 		{
-			public abstract SpineCmdPayloadBase CreateAnswer( HeaderType header, Server server );
+			public abstract SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection );
 
 			public virtual SpineCmdPayloadBase CreateNotify( Server server )
 			{

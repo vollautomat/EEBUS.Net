@@ -36,9 +36,9 @@ namespace EEBUS.SHIP.Messages
 
 		public new class Class : ShipDataMessage<DataMessage>.Class
 		{
-			public override DataMessage Create( byte[] data, Server server )
+			public override DataMessage Create( byte[] data, Connection connection )
 			{
-				DataMessage dm = template.FromJsonVirtual( data, server );
+				DataMessage dm = template.FromJsonVirtual( data, connection );
 				return dm;
 			}
 		}
@@ -64,14 +64,14 @@ namespace EEBUS.SHIP.Messages
 			this.data.payload = payload;
 		}
 
-		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
 		{
-			if ( state == Server.State.WaitingForCloseInitOrData )
+			if ( state == Connection.State.Connected )
 			{
 				if ( this.data.payload.ContainsKey( "datagram" ) )
 				{
 					SpineDatagramPayload datagram = this.data.payload.ToObject<SpineDatagramPayload>();
-					SpineDatagramPayload answer = datagram.CreateAnswer( NextCount, this.server );
+					SpineDatagramPayload answer = datagram.CreateAnswer( NextCount, this.connection );
 
 					if ( null != answer )
 					{
@@ -79,7 +79,7 @@ namespace EEBUS.SHIP.Messages
 						if ( null != reply )
 						{
 							await reply.Send( ws ).ConfigureAwait( false );
-							return (Server.State.WaitingForCloseInitOrData, Server.SubState.None);
+							return (Connection.State.Connected, Connection.SubState.None);
 						}
 						else
 						{

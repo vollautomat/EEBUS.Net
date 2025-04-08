@@ -28,71 +28,71 @@ namespace EEBUS.SHIP.Messages
 
 		public new class Class : ShipControlMessage<PinCheckMessage>.Class
 		{
-			public override PinCheckMessage Create( byte[] data, Server server )
+			public override PinCheckMessage Create( byte[] data, Connection connection )
 			{
-				return template.FromJsonVirtual( data, server );
+				return template.FromJsonVirtual( data, connection );
 			}
 		}
 
 		public ConnectionPinStateType connectionPinState { get; set; } = new();
 
-		public override (Server.State, Server.SubState, string) Test( Server.State state )
+		public override (Connection.State, Connection.SubState, string) ServerTest( Connection.State state )
 		{
 			string		 error	  = null;
-			Server.State newState = state;
+			Connection.State newState = state;
 
 			if ( this.connectionPinState.pinState != PinStateType.none )
 			{
 				error = "Pinstate none expected!";
-				newState = Server.State.Stop;
+				newState = Connection.State.Stop;
 			}
 			if (this.connectionPinState.inputPermissionSpecified != false)
 			{
 				error = "Pinstate inputPermissionSpecified expected!";
-				newState = Server.State.Stop;
+				newState = Connection.State.Stop;
 			}
 
-			return (newState, Server.SubState.None, error);
+			return (newState, Connection.SubState.None, error);
 		}
 
-		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
 		{
-			if ( state == Server.State.WaitingForPinCheck )
+			if ( state == Connection.State.WaitingForPinCheck )
 			{
 				await Send( ws ).ConfigureAwait( false );
-				return (Server.State.WaitingForAccessMethodsRequest, Server.SubState.None);
+				return (Connection.State.WaitingForAccessMethodsRequest, Connection.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for PinCheckit" );
 		}
 
-		public override (Client.State, Client.SubState, string) Test( Client.State state )
+		public override (Connection.State, Connection.SubState, string) ClientTest( Connection.State state )
 		{
 			string		 error	  = null;
-			Client.State newState = state;
+			Connection.State newState = state;
 
 			if ( this.connectionPinState.pinState != PinStateType.none )
 			{
 				error = "Pinstate none expected!";
-				newState = Client.State.Stop;
+				newState = Connection.State.Stop;
 			}
 			if (this.connectionPinState.inputPermissionSpecified != false)
 			{
 				error = "Pinstate inputPermissionSpecified expected!";
-				newState = Client.State.Stop;
+				newState = Connection.State.Stop;
 			}
 
-			return (newState, Client.SubState.None, error);
+			return (newState, Connection.SubState.None, error);
 		}
 	
-		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
 		{
-			if ( state == Client.State.WaitingForPinCheck )
+			if ( state == Connection.State.WaitingForPinCheck )
 			{
 				AccessMethodsRequestMessage method = new AccessMethodsRequestMessage();
 				await method.Send( ws ).ConfigureAwait( false );
 
-				return (Client.State.WaitingForAccessMethodsRequest, Client.SubState.None);
+				return (Connection.State.WaitingForAccessMethodsRequest, Connection.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for PinCheckit" );

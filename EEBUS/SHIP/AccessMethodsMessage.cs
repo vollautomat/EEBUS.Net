@@ -27,30 +27,30 @@ namespace EEBUS.SHIP.Messages
 		
 		public new class Class : ShipControlMessage<AccessMethodsMessage>.Class
 		{
-			public override AccessMethodsMessage Create( byte[] data, Server server )
+			public override AccessMethodsMessage Create( byte[] data, Connection connection )
 			{
-				return template.FromJsonVirtual( data, server );
+				return template.FromJsonVirtual( data, connection );
 			} 			
 		}
 
-		public override async Task<(Server.State, Server.SubState)> NextState( WebSocket ws, Server.State state, Server.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
 		{
-			if ( state == Server.State.WaitingForAccessMethods )
+			if ( state == Connection.State.WaitingForAccessMethods )
 			{
 				await Send( ws ).ConfigureAwait( false );
-				return (Server.State.WaitingForCloseInitOrData, Server.SubState.None);
+				return (Connection.State.Connected, Connection.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for AccessMethods" );
 		}
 
 #pragma warning disable CS1998
-		public override async Task<(Client.State, Client.SubState)> NextState( WebSocket ws, Client.State state, Client.SubState subState )
+		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
 #pragma warning restore CS1998
 		{
-			if ( state == Client.State.WaitingForAccessMethods )
+			if ( state == Connection.State.WaitingForAccessMethods )
 			{
-				return (Client.State.Connected, Client.SubState.None);
+				return (Connection.State.Connected, Connection.SubState.None);
 			}
 
 			throw new Exception( "Was waiting for AccessMethods" );
