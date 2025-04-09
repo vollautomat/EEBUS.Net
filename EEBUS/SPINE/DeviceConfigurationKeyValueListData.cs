@@ -2,6 +2,7 @@
 using EEBUS.Messages;
 using Newtonsoft.Json;
 using System;
+using System.Threading.Tasks;
 
 namespace EEBUS.SPINE.Commands
 {
@@ -14,7 +15,7 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdDeviceConfigurationKeyValueListDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
+			public override async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
 				DeviceConfigurationKeyValueListData	    payload = new DeviceConfigurationKeyValueListData();
 				DeviceConfigurationKeyValueListDataType data	= payload.cmd[0].deviceConfigurationKeyValueListData;

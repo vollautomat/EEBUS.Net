@@ -1,6 +1,7 @@
 ﻿
 using EEBUS.Messages;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace EEBUS.SPINE.Commands
 {
@@ -13,7 +14,7 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdNodeManagementDetailedDiscoveryDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
+			public override async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
 				NodeManagementDetailedDiscoveryData		payload = new NodeManagementDetailedDiscoveryData();
 				NodeManagementDetailedDiscoveryDataType data	= payload.cmd[0].nodeManagementDetailedDiscoveryData;

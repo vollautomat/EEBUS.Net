@@ -86,6 +86,14 @@ namespace EEBUS
 
 		public static Settings Settings { get { return settings; } }
 
+		public WebSocket WebSocket
+		{
+			get
+			{
+				return this.ws;
+			}
+		}
+
 		public void SetHeartbeatAddresses( AddressType source, AddressType destination )
 		{
 			this.heartbeatSource	  = source;

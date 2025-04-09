@@ -74,9 +74,7 @@ namespace EEBUS.SHIP.Messages
 			throw new Exception( "Hello aborted!" );
 		}
 
-#pragma warning disable CS1998
 		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
-#pragma warning restore CS1998
 		{
 			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.ready )
 			{

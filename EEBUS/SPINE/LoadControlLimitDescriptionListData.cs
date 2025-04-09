@@ -1,6 +1,7 @@
 ﻿
 using EEBUS.Messages;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace EEBUS.SPINE.Commands
 {
@@ -13,19 +14,19 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdLoadControlLimitDescriptionListDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
+			public override async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
 				LoadControlLimitDescriptionListData	    payload = new LoadControlLimitDescriptionListData();
 				LoadControlLimitDescriptionListDataType data	= payload.cmd[0].loadControlLimitDescriptionListData;
 
-				data.loadControlLimitDescriptionData = [new(), new()];
+				data.loadControlLimitDescriptionData = [new()];
 				data.loadControlLimitDescriptionData[0].limitId		   = 0;
 				data.loadControlLimitDescriptionData[0].limitType	   = "signDependentAbsValueLimit";
 				data.loadControlLimitDescriptionData[0].limitCategory  = "obligation";
 				data.loadControlLimitDescriptionData[0].limitDirection = "consume";
-				data.loadControlLimitDescriptionData[1].measurementId  = 0;
-				data.loadControlLimitDescriptionData[1].unit		   = "W";
-				data.loadControlLimitDescriptionData[1].scopeType	   = "activePowerLimit";
+				data.loadControlLimitDescriptionData[0].measurementId  = 0;
+				data.loadControlLimitDescriptionData[0].unit		   = "W";
+				data.loadControlLimitDescriptionData[0].scopeType	   = "activePowerLimit";
 
 				return payload;
 			}

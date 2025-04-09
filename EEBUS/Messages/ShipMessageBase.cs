@@ -41,9 +41,7 @@ namespace EEBUS.Messages
 			return (state, Connection.SubState.None, null);
 		}
 
-#pragma warning disable CS1998
 		public virtual async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
-#pragma warning restore CS1998
 		{
 			return (Connection.State.ErrorOrTimeout, Connection.SubState.None);
 		}

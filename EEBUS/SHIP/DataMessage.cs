@@ -71,7 +71,7 @@ namespace EEBUS.SHIP.Messages
 				if ( this.data.payload.ContainsKey( "datagram" ) )
 				{
 					SpineDatagramPayload datagram = this.data.payload.ToObject<SpineDatagramPayload>();
-					SpineDatagramPayload answer = datagram.CreateAnswer( NextCount, this.connection );
+					SpineDatagramPayload answer   = await datagram.CreateAnswer( NextCount, this.connection );
 
 					if ( null != answer )
 					{
@@ -100,7 +100,7 @@ namespace EEBUS.SHIP.Messages
 	[System.SerializableAttribute()]
 	public class DataType
 	{
-		public HeaderType header { get; set; } = new();
+		public ShipHeaderType header { get; set; } = new();
 
 		public JObject payload { get; set; }
 
@@ -110,7 +110,7 @@ namespace EEBUS.SHIP.Messages
 
 	/// <remarks/>
 	[System.SerializableAttribute()]
-	public class HeaderType
+	public class ShipHeaderType
 	{
 		public string protocolId { get; set; } = "ee1.0";
 	}

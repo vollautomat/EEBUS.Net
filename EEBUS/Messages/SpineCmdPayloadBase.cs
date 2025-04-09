@@ -2,6 +2,7 @@
 using Makaretu.Dns;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EEBUS.Messages
 {
@@ -13,9 +14,12 @@ namespace EEBUS.Messages
 
 		public abstract class Class
 		{
-			public abstract SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection );
+			public virtual async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
+			{
+				return null;
+			}
 
-			public virtual SpineCmdPayloadBase CreateNotify( Server server )
+			public virtual SpineCmdPayloadBase CreateNotify( DatagramType datagram )
 			{
 				return null;
 			}

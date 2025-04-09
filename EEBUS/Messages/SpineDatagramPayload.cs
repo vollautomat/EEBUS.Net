@@ -3,6 +3,7 @@ using EEBUS.SPINE;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace EEBUS.Messages
 {
@@ -24,12 +25,14 @@ namespace EEBUS.Messages
 					return "result";
 				case "notify":
 					return "";
+				case "write":
+					return "result";
 				default:
 					return null;
 			}
 		}
 
-		public SpineDatagramPayload CreateAnswer( ulong counter, Connection connection )
+		public async Task<SpineDatagramPayload> CreateAnswer( ulong counter, Connection connection )
 		{
 			if ( ! this.datagram.payload.TryGetValue( "cmd", out JToken cmds ) )
 				return null;
@@ -44,7 +47,11 @@ namespace EEBUS.Messages
 			if ( null == prop )
 				return null;
 
-			SpineCmdPayloadBase.Class cls = SpineCmdPayloadBase.GetClass( prop.Name );
+			string command = prop.Name;
+			if ( command == "function" )
+				command = prop.Value.Value<string>();
+
+			SpineCmdPayloadBase.Class cls = SpineCmdPayloadBase.GetClass( command );
 			if ( null == cls )
 				return null;
 
@@ -56,7 +63,7 @@ namespace EEBUS.Messages
 			reply.datagram.header.cmdClassifier		  = GetAnswerCmdClassifier();
 			reply.datagram.header.ackRequest		  = cls.GetAnswerAckRequest();
 
-			SpineCmdPayloadBase payload = cls.CreateAnswer( reply.datagram.header, connection );
+			SpineCmdPayloadBase payload = await cls.CreateAnswer( this.datagram, reply.datagram.header, connection );
 			if ( null == payload )
 				return null;
 
@@ -98,6 +105,7 @@ namespace EEBUS.Messages
 
 		public ulong msgCounter { get; set; }
 
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public ulong? msgCounterReference { get; set; }
 
 		public string cmdClassifier { get; set; }

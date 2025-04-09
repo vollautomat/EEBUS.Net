@@ -44,9 +44,7 @@ namespace EEBUS.SHIP.Messages
 			throw new Exception( "Was waiting for AccessMethods" );
 		}
 
-#pragma warning disable CS1998
 		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
-#pragma warning restore CS1998
 		{
 			if ( state == Connection.State.WaitingForAccessMethods )
 			{

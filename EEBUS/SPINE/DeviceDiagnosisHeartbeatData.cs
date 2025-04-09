@@ -3,6 +3,7 @@ using EEBUS.Messages;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics.Metrics;
+using System.Threading.Tasks;
 
 namespace EEBUS.SPINE.Commands
 {
@@ -17,7 +18,7 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdDeviceDiagnosisHeartbeatDataType>.Class
 		{
-			public override SpineCmdPayloadBase CreateAnswer( HeaderType header, Connection connection )
+			public override async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
 				connection.SetHeartbeatAddresses( header.addressSource, header.addressDestination );
 
@@ -29,7 +30,7 @@ namespace EEBUS.SPINE.Commands
 				return payload;
 			}
 
-			public override SpineCmdPayloadBase CreateNotify( Server server )
+			public override SpineCmdPayloadBase CreateNotify( DatagramType datagram )
 			{
 				DeviceDiagnosisHeartbeatData	 payload = new DeviceDiagnosisHeartbeatData();
 				DeviceDiagnosisHeartbeatDataType data	 = payload.cmd[0].deviceDiagnosisHeartbeatData;

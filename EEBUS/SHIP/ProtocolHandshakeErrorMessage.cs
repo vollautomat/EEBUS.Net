@@ -31,16 +31,12 @@ namespace EEBUS.SHIP.Messages
 
 		public MessageProtocolHandshakeErrorType messageProtocolHandshakeError { get; set; } = new();
 
-#pragma warning disable CS1998
 		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
-#pragma warning restore CS1998
 		{
 			return (Connection.State.Stop, Connection.SubState.None);
 		}
 
-#pragma warning disable CS1998
 		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
-#pragma warning restore CS1998
 		{
 			return (Connection.State.Stop, Connection.SubState.None);
 		}
