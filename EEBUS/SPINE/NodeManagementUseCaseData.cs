@@ -19,7 +19,7 @@ namespace EEBUS.SPINE.Commands
 				NodeManagementUseCaseData	  payload = new NodeManagementUseCaseData();
 				NodeManagementUseCaseDataType data	  = payload.cmd[0].nodeManagementUseCaseData;
 
-				data.useCaseInformation[0].address.device								= Server.Settings.Id;
+				data.useCaseInformation[0].address.device								= Server.Settings.Device.Id;
 				data.useCaseInformation[0].address.entity								= [1];
 				data.useCaseInformation[0].actor										= "ControllableSystem";
 				data.useCaseInformation[0].useCaseSupport[0].useCaseName				= "limitationOfPowerConsumption";

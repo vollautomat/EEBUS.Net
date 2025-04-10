@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Net.WebSockets;
 
 using EEBUS.Messages;
+using System.Data;
 
 namespace EEBUS.SHIP.Messages
 {
@@ -27,28 +28,28 @@ namespace EEBUS.SHIP.Messages
 
 		public AccessMethodsRequestType accessMethodsRequest { get; set; } = new();
 	
-		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForAccessMethodsRequest )
+			if ( connection.State == Connection.EState.WaitingForAccessMethodsRequest )
 			{
-				await Send( ws ).ConfigureAwait( false );
-				return (Connection.State.WaitingForAccessMethods, Connection.SubState.None);
+				await Send( connection.WebSocket ).ConfigureAwait( false );
+				return (Connection.EState.WaitingForAccessMethods, Connection.ESubState.None);
 			}
 
 			throw new Exception( "Was waiting for AccessMethodsRequest" );
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextClientState(WebSocket ws, Connection.State state, Connection.SubState subState)
+		public override async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForAccessMethodsRequest )
+			if ( connection.State == Connection.EState.WaitingForAccessMethodsRequest )
 			{
-				AccessMethodsMessage method = new AccessMethodsMessage( Client.Settings.Id );
-				await method.Send( ws ).ConfigureAwait( false );
+				AccessMethodsMessage method = new AccessMethodsMessage( Client.Settings.Device.Id );
+				await method.Send( connection.WebSocket ).ConfigureAwait( false );
 
-				return (Connection.State.WaitingForAccessMethods, Connection.SubState.None);
+				return (Connection.EState.WaitingForAccessMethods, Connection.ESubState.None);
 			}
 
-			throw new Exception( "Was waiting for PinCheckit" );
+			throw new Exception( "Was waiting for PinChecked" );
 		}
 	}
 

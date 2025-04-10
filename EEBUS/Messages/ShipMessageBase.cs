@@ -31,24 +31,24 @@ namespace EEBUS.Messages
 			return cls != null ? cls.Create( data, connection ) : null;
 		}
 
-		public virtual (Connection.State, Connection.SubState, string) ServerTest( Connection.State state )
+		public virtual (Connection.EState, Connection.ESubState, string) ServerTest( Connection.EState state )
 		{
-			return (state, Connection.SubState.None, null);
+			return (state, Connection.ESubState.None, null);
 		}
 
-		public virtual (Connection.State, Connection.SubState, string) ClientTest( Connection.State state )
+		public virtual (Connection.EState, Connection.ESubState, string) ClientTest( Connection.EState state )
 		{
-			return (state, Connection.SubState.None, null);
+			return (state, Connection.ESubState.None, null);
 		}
 
-		public virtual async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public virtual async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			return (Connection.State.ErrorOrTimeout, Connection.SubState.None);
+			return (Connection.EState.ErrorOrTimeout, Connection.ESubState.None);
 		}
 
-		public virtual async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public virtual async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection )
 		{
-			return await NextServerState( ws, state, subState );
+			return await NextServerState( connection );
 		}
 
 		public abstract Task Send( WebSocket ws );

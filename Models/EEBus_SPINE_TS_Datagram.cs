@@ -1,4 +1,5 @@
-﻿/// <remarks/>
+﻿/*
+/// <remarks/>
 [System.SerializableAttribute()]
 public partial class ActuatorLevelDataType {
     
@@ -31969,3 +31970,4 @@ public partial class DatagramType {
         }
     }
 }
+*/

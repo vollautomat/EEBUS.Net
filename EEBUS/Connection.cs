@@ -1,6 +1,8 @@
 ﻿using EEBUS.Messages;
+using EEBUS.Models;
 using EEBUS.SHIP.Messages;
 using EEBUS.SPINE.Commands;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Net.WebSockets;
@@ -10,17 +12,17 @@ namespace EEBUS
 {
 	public class Connection
 	{
-		protected string	host;
-		protected WebSocket ws;
-		protected State		state;
-		protected SubState	subState;
+		protected HostString host;
+		protected WebSocket	 ws;
+		protected EState	 state;
+		protected ESubState	 subState;
 
-		private AddressType heartbeatSource;
-		private AddressType heartbeatDestination;
+		private AddressType  heartbeatSource;
+		private AddressType  heartbeatDestination;
 
 		static private Settings settings;
 
-		public enum State
+		public enum EState
 		{
 			WaitingForInit,
 			WaitingForConnectionHello,
@@ -36,7 +38,7 @@ namespace EEBUS
 			ErrorOrTimeout
 		}
 
-		public enum SubState
+		public enum ESubState
 		{
 			None,
 			FirstPending,
@@ -52,7 +54,7 @@ namespace EEBUS
 			{
 				Connection connection = (Connection) connectionObj;
 				
-				if ( connection.state == Connection.State.Connected )
+				if ( connection.State == Connection.EState.Connected )
 				{
 					if ( connection is Server )
 						Debug.WriteLine( "--- Heartbeat per Server senden ---" );
@@ -76,7 +78,7 @@ namespace EEBUS
 			}
 		}
 
-		public Connection( string host, WebSocket ws, Settings settings )
+		public Connection( HostString host, WebSocket ws, Settings settings, Devices devices )
 		{
 			this.host = host;
 			this.ws	  = ws;
@@ -86,13 +88,11 @@ namespace EEBUS
 
 		public static Settings Settings { get { return settings; } }
 
-		public WebSocket WebSocket
-		{
-			get
-			{
-				return this.ws;
-			}
-		}
+		public WebSocket	  WebSocket { get { return this.ws; } }
+
+		public EState		  State		{ get { return this.state; } }
+
+		public ESubState	  SubState	{ get { return this.subState; } }
 
 		public void SetHeartbeatAddresses( AddressType source, AddressType destination )
 		{

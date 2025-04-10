@@ -1,9 +1,11 @@
 ﻿
 using EEBUS.Models;
 using Makaretu.Dns;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -13,119 +15,111 @@ namespace EEBUS
 {
     public class MDNSClient
     {
-        private ConcurrentDictionary<ServerNode, DateTime> _currentEEBUSNodes = new ConcurrentDictionary<ServerNode, DateTime>();
+		private Devices devices;
 
-        public void Run()
+        public void Run( Devices devices )
         {
-            _ = Task.Run(async() =>
+            _ = Task.Run( async() =>
             {
                 Thread.CurrentThread.IsBackground = true;
 
-                MulticastService mdns = new MulticastService();
-                ServiceDiscovery sd = new ServiceDiscovery(mdns);
+                this.devices = devices;
 
-                sd.ServiceDiscovered += (s, serviceName) => { mdns.SendQuery(serviceName); };
+                MulticastService mdns = new MulticastService();
+                ServiceDiscovery sd   = new ServiceDiscovery( mdns );
+
+                sd.ServiceDiscovered         += (s, serviceName) => { mdns.SendQuery( serviceName ); };
                 sd.ServiceInstanceDiscovered += Sd_ServiceInstanceDiscovered;
 
                 try
                 {
                     mdns.Start();
 
-                    while (true)
+                    while ( true )
                     {
                         sd.QueryAllServices();
+                        devices.GarbageCollect();
 
-                        // purge all records that are more than 1 hour old
-                        foreach(KeyValuePair<ServerNode, DateTime> t in _currentEEBUSNodes)
-                        {
-                            if (t.Value < DateTime.UtcNow.Add(new TimeSpan(-1,0,0)))
-                            {
-                                _currentEEBUSNodes.TryRemove(t);
-                            }
-                        }
-
-                        await Task.Delay(5000).ConfigureAwait(false);
+                        await Task.Delay( 5000 ).ConfigureAwait( false );
                     }
                 }
-                catch (Exception ex)
+                catch ( Exception ex )
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine( ex.Message );
                 }
                 finally
                 {
                     sd.Dispose();
                     mdns.Stop();
                 }
-            });
+            } );
         }
 
         public ServerNode[] getEEBUSNodes()
         {
-            return _currentEEBUSNodes.Keys.ToArray();
+            List<ServerNode> nodes = new();
+
+            this.devices.Remote.ForEach( rd => nodes.Add( new ServerNode {
+                Id   = rd.Id,
+                SKI  = rd.SKI.ToReadable(),
+                Name = rd.Name,
+                Url  = rd.Url
+            } ) );
+
+            return nodes.ToArray();
         }
 
-        private void Sd_ServiceInstanceDiscovered(object sender, ServiceInstanceDiscoveryEventArgs e)
+        private void Sd_ServiceInstanceDiscovered( object sender, ServiceInstanceDiscoveryEventArgs ev )
         {
-            if (e.ServiceInstanceName.ToString().Contains("._ship."))
+            if ( ev.ServiceInstanceName.ToString().Contains( "._ship." ) )
             {
-                Console.WriteLine($"EEBUS service instance '{e.ServiceInstanceName}' discovered.");
+                Console.WriteLine( $"EEBUS service instance '{ev.ServiceInstanceName}' discovered." );
 
-                IEnumerable<SRVRecord> servers = e.Message.AdditionalRecords.OfType<SRVRecord>();
-                IEnumerable<AddressRecord> addresses = e.Message.AdditionalRecords.OfType<AddressRecord>();
-                IEnumerable<string> txtRecords = e.Message.AdditionalRecords.OfType<TXTRecord>()?.SelectMany(s => s.Strings);
+                IEnumerable<SRVRecord>     servers    = ev.Message.AdditionalRecords.OfType<SRVRecord>();
+                IEnumerable<AddressRecord> addresses  = ev.Message.AdditionalRecords.OfType<AddressRecord>();
+                IEnumerable<string>        txtRecords = ev.Message.AdditionalRecords.OfType<TXTRecord>()?.SelectMany( s => s.Strings );
                 
-                if (servers?.Count() > 0 && addresses?.Count() > 0 && txtRecords?.Count() > 0)
+                if ( servers?.Count() > 0 && addresses?.Count() > 0 && txtRecords?.Count() > 0 )
                 {
-                    foreach (SRVRecord server in servers)
+                    foreach ( SRVRecord server in servers )
                     {
-                        IEnumerable<AddressRecord> serverAddresses = addresses.Where(w => w.Name == server.Target);
-                        if (serverAddresses?.Count() > 0)
+                        IEnumerable<AddressRecord> serverAddresses = addresses.Where( w => w.Name == server.Target );
+                        if ( serverAddresses?.Count() > 0 )
                         {
-                            foreach (AddressRecord serverAddress in serverAddresses)
+                            foreach ( AddressRecord serverAddress in serverAddresses )
                             {
                                 // we only want IPv4 addresses
-                                if (serverAddress.Address.AddressFamily == AddressFamily.InterNetwork)
+                                if ( serverAddress.Address.AddressFamily == AddressFamily.InterNetwork )
                                 {
-                                    string id = string.Empty;
+                                    string id   = string.Empty;
                                     string path = string.Empty;
-                                    foreach (string textRecord in txtRecords)
+                                    string ski  = string.Empty;
+
+                                    foreach ( string textRecord in txtRecords )
                                     {
-                                        if (textRecord.StartsWith("path"))
-                                        {
-                                            path = textRecord.Substring(textRecord.IndexOf('=') + 1);
-                                        }
+                                        if ( textRecord.StartsWith( "id" ) )
+                                            id = textRecord.Substring( textRecord.IndexOf( '=' ) + 1 );
+									
+                                        if ( textRecord.StartsWith( "path" ) )
+											path = textRecord.Substring( textRecord.IndexOf( '=' ) + 1 );
 
-                                        if (textRecord.StartsWith("id"))
-                                        {
-                                            id = textRecord.Substring(textRecord.IndexOf('=') + 1);
-                                        }
-                                    }
+										if ( textRecord.StartsWith( "ski" ) )
+											ski = textRecord.Substring( textRecord.IndexOf( '=' ) + 1 );
 
-                                    if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(path))
+									}
+
+									if ( ! string.IsNullOrEmpty( id ) && ! string.IsNullOrEmpty( path ) )
                                     {
-                                        ServerNode newNode = new ServerNode
-                                        {
-                                            Name = e.ServiceInstanceName.ToString(),
-                                            Url = serverAddress.Address.ToString() + ":" + server.Port.ToString() + path,
-                                            Id = id
-                                        };
-
-                                        if (_currentEEBUSNodes.ContainsKey(newNode))
-                                        {
-                                            _currentEEBUSNodes[newNode] = DateTime.UtcNow;
-                                        }
-                                        else
-                                        {
-                                            _currentEEBUSNodes.TryAdd(newNode, DateTime.UtcNow);
-                                        }
-                                    }
-                                }
+                                        string url = serverAddress.Address.ToString() + ":" + server.Port.ToString() + path;
+										RemoteDevice device = this.devices.GetOrCreateRemote( id, ski, url );
+                                        if ( null != device )
+                                            device.Name = ev.ServiceInstanceName.ToString();
+									}
+								}
                             }
                         }
                     }
                 }
-
-                
             }
         }
     }

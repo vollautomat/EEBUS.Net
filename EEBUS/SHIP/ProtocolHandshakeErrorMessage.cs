@@ -31,14 +31,14 @@ namespace EEBUS.SHIP.Messages
 
 		public MessageProtocolHandshakeErrorType messageProtocolHandshakeError { get; set; } = new();
 
-		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			return (Connection.State.Stop, Connection.SubState.None);
+			return (Connection.EState.Stop, Connection.ESubState.None);
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection )
 		{
-			return (Connection.State.Stop, Connection.SubState.None);
+			return (Connection.EState.Stop, Connection.ESubState.None);
 		}
 	}
 

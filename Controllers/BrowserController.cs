@@ -13,6 +13,7 @@ using EEBUS.Models;
 using EEBUS.SHIP.Messages;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Http;
 
 namespace EEBUS.Controllers
 {
@@ -21,17 +22,19 @@ namespace EEBUS.Controllers
         private readonly MDNSClient      mDNSClient;
 		private readonly MDNSService     mDNSService;
 		private readonly Settings        settings;
+		private Devices                  devices;
 		private static   ClientWebSocket wsClient;
 
 		private ServerNode model = new ServerNode();
 
-        public BrowserController( MDNSClient mDNSClient, MDNSService mDNSService, IOptions<Settings> options )
+        public BrowserController( MDNSClient mDNSClient, MDNSService mDNSService, IOptions<Settings> options, Devices devices )
         {
             this.mDNSClient     = mDNSClient;
             this.mDNSService    = mDNSService;
             this.settings       = options.Value;
+            this.devices        = devices;
 
-			this.model.LocalSKI = this.mDNSService.LocalSKI;
+			this.model.LocalSKI = devices.Local.SKI.ToReadable();
 		}
 
 		public IActionResult Index()
@@ -119,7 +122,10 @@ namespace EEBUS.Controllers
 
                 if ( wsClient.State == WebSocketState.Open )
                 {
-                    Client client = new Client( model.Url, wsClient, this.settings );
+					Uri        uri        = new Uri( "wss://" + model.Url );
+					HostString hostString = new HostString( uri.Host, uri.Port );
+
+					Client client = new Client( hostString, wsClient, this.settings, this.devices );
 
                     await client.Run().ConfigureAwait( false );
 					

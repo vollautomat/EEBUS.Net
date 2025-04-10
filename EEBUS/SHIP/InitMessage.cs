@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
@@ -30,53 +31,53 @@ namespace EEBUS.SHIP.Messages
 		public override byte[] bytes { get; set; } = { SHIPMessageType.INIT, SHIPMessageValue.CMI_HEAD };
 
 
-		public override (Connection.State, Connection.SubState, string) ServerTest( Connection.State state )
+		public override (Connection.EState, Connection.ESubState, string) ServerTest( Connection.EState state )
 		{
 			string		 error	  = null;
-			Connection.State newState = state;
+			Connection.EState newState = state;
 
 			if ( this.bytes[1] != SHIPMessageValue.CMI_HEAD )
 			{
 				error = "Expected SMI_HEAD payload in INIT message!";
-				newState = Connection.State.Stop;
+				newState = Connection.EState.Stop;
 			}
 
-			return (newState, Connection.SubState.None, error);
+			return (newState, Connection.ESubState.None, error);
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForInit || state == Connection.State.Connected )
+			if ( connection.State == Connection.EState.WaitingForInit || connection.State == Connection.EState.Connected )
 			{
-				await Send( ws ).ConfigureAwait( false );
-				return (Connection.State.WaitingForConnectionHello, Connection.SubState.None);
+				await Send( connection.WebSocket ).ConfigureAwait( false );
+				return (Connection.EState.WaitingForConnectionHello, Connection.ESubState.None);
 			}
 
 			throw new Exception( "Was waiting for Init" );
 		}
 
-		public override (Connection.State, Connection.SubState, string) ClientTest( Connection.State state )
+		public override (Connection.EState, Connection.ESubState, string) ClientTest( Connection.EState state )
 		{
 			string		 error	  = null;
-			Connection.State newState = state;
+			Connection.EState newState = state;
 
 			if ( this.bytes[1] != SHIPMessageValue.CMI_HEAD )
 			{
 				error = "Expected SMI_HEAD payload in INIT message!";
-				newState = Connection.State.Stop;
+				newState = Connection.EState.Stop;
 			}
 
-			return (newState, Connection.SubState.None, error);
+			return (newState, Connection.ESubState.None, error);
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subSate )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForInit || state == Connection.State.Connected )
+			if ( connection.State == Connection.EState.WaitingForInit || connection.State == Connection.EState.Connected )
 			{
 				ConnectionHelloMessage message = new ConnectionHelloMessage( ConnectionHelloPhaseType.ready, 60000 );
-				await message.Send( ws ).ConfigureAwait( false );
+				await message.Send( connection.WebSocket ).ConfigureAwait( false );
 
-				return (Connection.State.WaitingForConnectionHello, Connection.SubState.None);
+				return (Connection.EState.WaitingForConnectionHello, Connection.ESubState.None);
 			}
 
 			throw new Exception( "Was waiting for Init" );

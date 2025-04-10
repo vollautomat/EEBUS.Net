@@ -7,6 +7,7 @@ using Newtonsoft.Json.Converters;
 
 using EEBUS.Messages;
 using System.Net;
+using System.Data;
 
 namespace EEBUS.SHIP.Messages
 {
@@ -36,63 +37,63 @@ namespace EEBUS.SHIP.Messages
 
 		public ConnectionPinStateType connectionPinState { get; set; } = new();
 
-		public override (Connection.State, Connection.SubState, string) ServerTest( Connection.State state )
+		public override (Connection.EState, Connection.ESubState, string) ServerTest( Connection.EState state )
 		{
 			string		 error	  = null;
-			Connection.State newState = state;
+			Connection.EState newState = state;
 
 			if ( this.connectionPinState.pinState != PinStateType.none )
 			{
 				error = "Pinstate none expected!";
-				newState = Connection.State.Stop;
+				newState = Connection.EState.Stop;
 			}
 			if (this.connectionPinState.inputPermissionSpecified != false)
 			{
 				error = "Pinstate inputPermissionSpecified expected!";
-				newState = Connection.State.Stop;
+				newState = Connection.EState.Stop;
 			}
 
-			return (newState, Connection.SubState.None, error);
+			return (newState, Connection.ESubState.None, error);
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForPinCheck )
+			if ( connection.State == Connection.EState.WaitingForPinCheck )
 			{
-				await Send( ws ).ConfigureAwait( false );
-				return (Connection.State.WaitingForAccessMethodsRequest, Connection.SubState.None);
+				await Send( connection.WebSocket ).ConfigureAwait( false );
+				return (Connection.EState.WaitingForAccessMethodsRequest, Connection.ESubState.None);
 			}
 
 			throw new Exception( "Was waiting for PinCheckit" );
 		}
 
-		public override (Connection.State, Connection.SubState, string) ClientTest( Connection.State state )
+		public override (Connection.EState, Connection.ESubState, string) ClientTest( Connection.EState state )
 		{
 			string		 error	  = null;
-			Connection.State newState = state;
+			Connection.EState newState = state;
 
 			if ( this.connectionPinState.pinState != PinStateType.none )
 			{
 				error = "Pinstate none expected!";
-				newState = Connection.State.Stop;
+				newState = Connection.EState.Stop;
 			}
 			if (this.connectionPinState.inputPermissionSpecified != false)
 			{
 				error = "Pinstate inputPermissionSpecified expected!";
-				newState = Connection.State.Stop;
+				newState = Connection.EState.Stop;
 			}
 
-			return (newState, Connection.SubState.None, error);
+			return (newState, Connection.ESubState.None, error);
 		}
 	
-		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForPinCheck )
+			if ( connection.State == Connection.EState.WaitingForPinCheck )
 			{
 				AccessMethodsRequestMessage method = new AccessMethodsRequestMessage();
-				await method.Send( ws ).ConfigureAwait( false );
+				await method.Send( connection.WebSocket ).ConfigureAwait( false );
 
-				return (Connection.State.WaitingForAccessMethodsRequest, Connection.SubState.None);
+				return (Connection.EState.WaitingForAccessMethodsRequest, Connection.ESubState.None);
 			}
 
 			throw new Exception( "Was waiting for PinCheckit" );

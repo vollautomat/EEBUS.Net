@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 
 using EEBUS.Messages;
 using Newtonsoft.Json;
+using System.Data;
 
 namespace EEBUS.SHIP.Messages
 {
@@ -33,22 +34,22 @@ namespace EEBUS.SHIP.Messages
 			} 			
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForAccessMethods )
+			if ( connection.State == Connection.EState.WaitingForAccessMethods )
 			{
-				await Send( ws ).ConfigureAwait( false );
-				return (Connection.State.Connected, Connection.SubState.None);
+				await Send( connection.WebSocket ).ConfigureAwait( false );
+				return (Connection.EState.Connected, Connection.ESubState.None);
 			}
 
 			throw new Exception( "Was waiting for AccessMethods" );
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection)
 		{
-			if ( state == Connection.State.WaitingForAccessMethods )
+			if ( connection.State == Connection.EState.WaitingForAccessMethods )
 			{
-				return (Connection.State.Connected, Connection.SubState.None);
+				return (Connection.EState.Connected, Connection.ESubState.None);
 			}
 
 			throw new Exception( "Was waiting for AccessMethods" );

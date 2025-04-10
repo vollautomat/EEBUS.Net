@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Converters;
 
 using EEBUS.Messages;
+using System.Data;
 
 namespace EEBUS.SHIP.Messages
 {
@@ -41,66 +42,66 @@ namespace EEBUS.SHIP.Messages
 
 		public ConnectionHelloType connectionHello { get; set; } = new();
 
-		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.ready )
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.ready )
 			{
-				await Send( ws ).ConfigureAwait( false ) ;
-				return (Connection.State.WaitingForProtocolHandshake, Connection.SubState.None);
+				await Send( connection.WebSocket ).ConfigureAwait( false ) ;
+				return (Connection.EState.WaitingForProtocolHandshake, Connection.ESubState.None);
 			}
 			
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && subState == Connection.SubState.None )
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && connection.SubState == Connection.ESubState.None )
 			{
-				await Send( ws ).ConfigureAwait( false ) ;
-				return (Connection.State.WaitingForProtocolHandshake, Connection.SubState.FirstPending);
+				await Send( connection.WebSocket ).ConfigureAwait( false ) ;
+				return (Connection.EState.WaitingForProtocolHandshake, Connection.ESubState.FirstPending);
 			}
 
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && subState == Connection.SubState.FirstPending )
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && connection.SubState == Connection.ESubState.FirstPending )
 			{
-				await Send( ws).ConfigureAwait( false );
-				return (Connection.State.WaitingForProtocolHandshake, Connection.SubState.SecondPending);
+				await Send( connection.WebSocket ).ConfigureAwait( false );
+				return (Connection.EState.WaitingForProtocolHandshake, Connection.ESubState.SecondPending);
 			}
 
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && subState == Connection.SubState.SecondPending )
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && connection.SubState == Connection.ESubState.SecondPending )
 			{
 				this.connectionHello.phase = ConnectionHelloPhaseType.aborted;
-				await Send( ws ).ConfigureAwait( false );
-				return (Connection.State.Stop, Connection.SubState.None);
+				await Send( connection.WebSocket ).ConfigureAwait( false );
+				return (Connection.EState.Stop, Connection.ESubState.None);
 			}
 
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.aborted )
-				return (Connection.State.Stop, Connection.SubState.None);
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.aborted )
+				return (Connection.EState.Stop, Connection.ESubState.None);
 
 			throw new Exception( "Hello aborted!" );
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextClientState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection )
 		{
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.ready )
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.ready )
 			{
 
 				ProtocolHandshakeMessage message = new ProtocolHandshakeMessage( ProtocolHandshakeTypeType.announceMax, 1, 0 );
-				await message.Send( ws ).ConfigureAwait( false );
-				return (Connection.State.WaitingForProtocolHandshake, Connection.SubState.None);
+				await message.Send( connection.WebSocket ).ConfigureAwait( false );
+				return (Connection.EState.WaitingForProtocolHandshake, Connection.ESubState.None);
 			}
 
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && this.connectionHello.prolongationRequest && subState == Connection.SubState.None )
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && this.connectionHello.prolongationRequest && connection.SubState == Connection.ESubState.None )
 			{
-				await Resend( ws ).ConfigureAwait( false ) ;
-				return (Connection.State.WaitingForConnectionHello, Connection.SubState.FirstPending);
+				await Resend( connection.WebSocket ).ConfigureAwait( false ) ;
+				return (Connection.EState.WaitingForConnectionHello, Connection.ESubState.FirstPending);
 			}
 
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && this.connectionHello.prolongationRequest && subState == Connection.SubState.FirstPending )
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && this.connectionHello.prolongationRequest && connection.SubState == Connection.ESubState.FirstPending )
 			{
-				await Resend( ws).ConfigureAwait( false );
-				return (Connection.State.WaitingForConnectionHello, Connection.SubState.SecondPending);
+				await Resend( connection.WebSocket ).ConfigureAwait( false );
+				return (Connection.EState.WaitingForConnectionHello, Connection.ESubState.SecondPending);
 			}
 
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && subState == Connection.SubState.SecondPending )
-				return (Connection.State.Stop, Connection.SubState.None);
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && connection.SubState == Connection.ESubState.SecondPending )
+				return (Connection.EState.Stop, Connection.ESubState.None);
 
-			if ( state == Connection.State.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.aborted )
-				return (Connection.State.Stop, Connection.SubState.None);
+			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.aborted )
+				return (Connection.EState.Stop, Connection.ESubState.None);
 
 			throw new Exception( "Was waiting for Init" );
 		}

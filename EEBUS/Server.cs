@@ -5,10 +5,10 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Microsoft.AspNetCore.Http;
+
 using EEBUS.Messages;
-using EEBUS.SHIP.Messages;
-using EEBUS.SPINE.Commands;
-using Newtonsoft.Json.Linq;
+using EEBUS.Models;
 
 namespace EEBUS
 {
@@ -18,14 +18,14 @@ namespace EEBUS
 	/// </summary>
 	public class Server : Connection
 	{
-		public Server( string host, WebSocket ws, Settings settings )
-			: base( host, ws, settings )
+		public Server( HostString host, WebSocket ws, Settings settings, Devices devices )
+			: base( host, ws, settings, devices )
 		{
 		}
 
-		static private ConcurrentDictionary<string, Server> serverMap = new ConcurrentDictionary<string, Server>();
+		static private ConcurrentDictionary<HostString, Server> serverMap = new();
 		
-		static public Server Get( string host )
+		static public Server Get( HostString host )
 		{
 			if ( ! serverMap.TryGetValue( host, out Server server ) )
 				return null;
@@ -58,14 +58,14 @@ namespace EEBUS
 
 					(this.state, this.subState, string error) = message.ServerTest( this.state );
 
-					if ( this.state == State.Stop && error != null )
+					if ( this.state == EState.Stop && error != null )
 						throw new Exception( error );
 					if ( error != null )
 						Console.WriteLine( error );
 
-					(this.state, this.subState) = await message.NextServerState( this.ws, this.state, this.subState ).ConfigureAwait( false );
+					(this.state, this.subState) = await message.NextServerState( this ).ConfigureAwait( false );
 
-					if ( this.state == State.Stop )
+					if ( this.state == EState.Stop )
 						throw new Exception( "Communication stopped!" );
 				}
 			}

@@ -5,21 +5,23 @@ using System.Threading.Tasks;
 
 using EEBUS.Enums;
 using EEBUS.Messages;
+using EEBUS.Models;
 using EEBUS.SHIP.Messages;
+using Microsoft.AspNetCore.Http;
 
 namespace EEBUS
 {
 	public class Client : Connection
 	{
-		public Client( string host, WebSocket ws, Settings settings )
-			: base( host, ws, settings )
+		public Client( HostString host, WebSocket ws, Settings settings, Devices devices )
+			: base( host, ws, settings, devices )
 		{
 		}
 
 		public async Task<bool> Run()
 		{
-			this.state	  = State.WaitingForInit;
-			this.subState = SubState.None;
+			this.state	  = EState.WaitingForInit;
+			this.subState = ESubState.None;
 
 			InitMessage initMessage = new InitMessage();
 			await initMessage.Send( this.ws ).ConfigureAwait( false );
@@ -29,7 +31,7 @@ namespace EEBUS
 
 			try
 			{
-				while ( this.state != State.Stop )
+				while ( this.state != EState.Stop )
 				{
 					byte[] receiveBuffer = new byte[10240];
 					WebSocketReceiveResult result = await this.ws.ReceiveAsync( receiveBuffer, new CancellationTokenSource( SHIPMessageTimeout.CMI_TIMEOUT ).Token ).ConfigureAwait( false );
@@ -45,12 +47,12 @@ namespace EEBUS
 
 					(this.state, this.subState, string error) = message.ClientTest( this.state );
 
-					if ( this.state == State.Stop && error != null )
+					if ( this.state == EState.Stop && error != null )
 						throw new Exception( error );
 					if ( error != null )
 						Console.WriteLine( error );
 
-					(this.state, this.subState) = await message.NextClientState( this.ws, this.state, this.subState ).ConfigureAwait( false );
+					(this.state, this.subState) = await message.NextClientState( this ).ConfigureAwait( false );
 
 					//if ( this.state == State.Stop )
 					//	throw new Exception( "Communication stopped!" );

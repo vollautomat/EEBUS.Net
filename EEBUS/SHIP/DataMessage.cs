@@ -64,9 +64,9 @@ namespace EEBUS.SHIP.Messages
 			this.data.payload = payload;
 		}
 
-		public override async Task<(Connection.State, Connection.SubState)> NextServerState( WebSocket ws, Connection.State state, Connection.SubState subState )
+		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			if ( state == Connection.State.Connected )
+			if ( connection.State == Connection.EState.Connected )
 			{
 				if ( this.data.payload.ContainsKey( "datagram" ) )
 				{
@@ -78,8 +78,8 @@ namespace EEBUS.SHIP.Messages
 						DataMessage reply = new DataMessage( answer );
 						if ( null != reply )
 						{
-							await reply.Send( ws ).ConfigureAwait( false );
-							return (Connection.State.Connected, Connection.SubState.None);
+							await reply.Send( connection.WebSocket ).ConfigureAwait( false );
+							return (Connection.EState.Connected, Connection.ESubState.None);
 						}
 						else
 						{

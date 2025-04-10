@@ -77,7 +77,7 @@ namespace EEBUS.Messages
 			get
 			{
 				AddressType address = new AddressType();
-				address.device  = Server.Settings.Id;
+				address.device  = Server.Settings.Device.Id;
 				address.entity  = [0];
 				address.feature = 0;
 

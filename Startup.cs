@@ -16,7 +16,8 @@ using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
+
+using EEBUS.Models;
 
 namespace EEBUS
 {
@@ -57,23 +58,24 @@ namespace EEBUS
             } );
 			services.Configure<Settings>( Configuration.GetSection( "Settings" ) );
 			
-            services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate(options =>
+            services.AddAuthentication( CertificateAuthenticationDefaults.AuthenticationScheme ).AddCertificate( options =>
             {
                 options.AllowedCertificateTypes = CertificateTypes.All;
-            });
+            } );
 
             services.AddAuthorization();
 
             services.AddSingleton<Settings>();
             services.AddSingleton<MDNSClient>();
             services.AddSingleton<MDNSService>();
+			services.AddSingleton<Devices>();
             //services.AddSingleton<SPINE>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure( IApplicationBuilder app, IWebHostEnvironment env, MDNSClient mDNSClient, MDNSService mDNSService )
+        public void Configure( IApplicationBuilder app, IWebHostEnvironment env, MDNSClient mDNSClient, MDNSService mDNSService, Devices devices )
         {
-            if (env.IsDevelopment())
+            if ( env.IsDevelopment() )
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -86,31 +88,31 @@ namespace EEBUS
 
             app.UseRouting();
 
-            app.UseEndpoints(endpoints =>
+            app.UseEndpoints( endpoints =>
             {
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
+            } );
 
             var webSocketOptions = new WebSocketOptions
             {
-                KeepAliveInterval = TimeSpan.FromSeconds(50)
+                KeepAliveInterval = TimeSpan.FromSeconds( 50 )
             };
 
-            app.UseWebSockets(webSocketOptions);
+            app.UseWebSockets( webSocketOptions );
 
             app.UseMiddleware<SHIPMiddleware>();
 
 			foreach ( Type type in GetTypesInNamespace( typeof( Startup ).Assembly, "EEBUS.SHIP.Messages" ) )
-			    RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+			    RuntimeHelpers.RunClassConstructor( type.TypeHandle );
 
             foreach ( Type type in GetTypesInNamespace( typeof( Startup ).Assembly, "EEBUS.SPINE.Commands" ) )
-			    RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+			    RuntimeHelpers.RunClassConstructor( type.TypeHandle );
 
 			// start our mDNS services
-			mDNSClient.Run();
-            mDNSService.Run();
+			mDNSClient.Run( devices );
+            mDNSService.Run( devices );
         }
 
 		private Type[] GetTypesInNamespace( Assembly assembly, string nameSpace )
@@ -123,13 +125,26 @@ namespace EEBUS
 	}
 	public class Settings
 	{
-		public string Name { get; set; }
-		public string Id { get; set; }
-		public string Model { get; set; }
-		public string Brand { get; set; }
-		public string Type { get; set; }
-		public string Serial { get; set; }
-		public string Host { get; set; }
-		public ushort Port { get; set; }
+        public DeviceSettings Device      { get; set; }
+    }
+
+    public class DeviceSettings
+    {
+		public string Name                { get; set; }
+		public string Id                  { get; set; }
+		public string Model               { get; set; }
+		public string Brand               { get; set; }
+		public string Type                { get; set; }
+		public string Serial              { get; set; }
+		public string Host                { get; set; }
+		public ushort Port                { get; set; }
+        public string NetworkFeatureSet   { get; set; }
+
+        public EntitySettings[] Entities  { get; set; } = [];
+	}
+
+    public class EntitySettings
+    {
+		public string Type                { get; set; }
 	}
 }

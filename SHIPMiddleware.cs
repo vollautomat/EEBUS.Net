@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
+using EEBUS.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
@@ -13,11 +14,13 @@ namespace EEBUS
     {
         private readonly RequestDelegate next;
         private readonly Settings        settings;
+        private Devices                  devices;
 
-        public SHIPMiddleware( RequestDelegate next, IOptions<Settings> options )
+		public SHIPMiddleware( RequestDelegate next, IOptions<Settings> options, Devices devices )
         {
             this.next     = next;
             this.settings = options.Value;
+            this.devices  = devices;
         }
 
         public async Task Invoke( HttpContext httpContext )
@@ -36,7 +39,7 @@ namespace EEBUS
                     await this.next( httpContext ).ConfigureAwait( false );
                 }
 
-                Server server = Server.Get( httpContext.Request.Host.Host );
+                Server server = Server.Get( httpContext.Request.Host );
                 if ( server != null )
                     await server.Close().ConfigureAwait( false );
 
@@ -47,8 +50,8 @@ namespace EEBUS
                     return;
                 }
 
-                server = new Server( httpContext.Request.Host.Host, socket, this.settings );
-                await server.Do().ConfigureAwait(false);
+                server = new Server( httpContext.Request.Host, socket, this.settings, this.devices );
+                await server.Do().ConfigureAwait( false );
             }
             catch ( Exception ex )
             {
