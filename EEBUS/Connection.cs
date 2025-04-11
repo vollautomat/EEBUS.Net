@@ -20,8 +20,6 @@ namespace EEBUS
 		private AddressType  heartbeatSource;
 		private AddressType  heartbeatDestination;
 
-		static private Settings settings;
-
 		public enum EState
 		{
 			WaitingForInit,
@@ -78,21 +76,29 @@ namespace EEBUS
 			}
 		}
 
-		public Connection( HostString host, WebSocket ws, Settings settings, Devices devices )
+		public Connection( HostString host, WebSocket ws, Devices devices )
 		{
-			this.host = host;
-			this.ws	  = ws;
-
-			Connection.settings = settings;
+			this.host	 = host;
+			this.ws		 = ws;
+			this.devices = devices;
 		}
 
-		public static Settings Settings { get { return settings; } }
+		public WebSocket   WebSocket { get { return this.ws; } }
 
-		public WebSocket	  WebSocket { get { return this.ws; } }
+		public EState	   State	 { get { return this.state; } }
 
-		public EState		  State		{ get { return this.state; } }
+		public ESubState   SubState	 { get { return this.subState; } }
 
-		public ESubState	  SubState	{ get { return this.subState; } }
+
+		private Devices	   devices;
+
+		public LocalDevice Local
+		{
+			get
+			{
+				return this.devices.Local;
+			}
+		}
 
 		public void SetHeartbeatAddresses( AddressType source, AddressType destination )
 		{

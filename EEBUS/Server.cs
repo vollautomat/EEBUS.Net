@@ -18,8 +18,8 @@ namespace EEBUS
 	/// </summary>
 	public class Server : Connection
 	{
-		public Server( HostString host, WebSocket ws, Settings settings, Devices devices )
-			: base( host, ws, settings, devices )
+		public Server( HostString host, WebSocket ws, Devices devices )
+			: base( host, ws, devices )
 		{
 		}
 

@@ -4,23 +4,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
-using EEBUS.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
+
+using EEBUS.Models;
 
 namespace EEBUS
 {
 	public class SHIPMiddleware
     {
         private readonly RequestDelegate next;
-        private readonly Settings        settings;
         private Devices                  devices;
 
-		public SHIPMiddleware( RequestDelegate next, IOptions<Settings> options, Devices devices )
+		public SHIPMiddleware( RequestDelegate next, Devices devices )
         {
-            this.next     = next;
-            this.settings = options.Value;
-            this.devices  = devices;
+            this.next    = next;
+            this.devices = devices;
         }
 
         public async Task Invoke( HttpContext httpContext )
@@ -39,18 +37,18 @@ namespace EEBUS
                     await this.next( httpContext ).ConfigureAwait( false );
                 }
 
-                Server server = Server.Get( httpContext.Request.Host );
+				Server server = Server.Get( httpContext.Request.Host );
                 if ( server != null )
                     await server.Close().ConfigureAwait( false );
 
                 var socket = await httpContext.WebSockets.AcceptWebSocketAsync( "ship" ).ConfigureAwait( false );
                 if ( socket == null || socket.State != WebSocketState.Open )
                 {
-                    Console.WriteLine( "Failed to accept socket from " + httpContext.Request.Host.Host );
+                    Console.WriteLine( "Failed to accept socket from " + httpContext.Request.Host.ToUriComponent() );
                     return;
                 }
 
-                server = new Server( httpContext.Request.Host, socket, this.settings, this.devices );
+                server = new Server( httpContext.Request.Host, socket, this.devices );
                 await server.Do().ConfigureAwait( false );
             }
             catch ( Exception ex )
@@ -65,7 +63,7 @@ namespace EEBUS
         private bool ProtocolSupported( HttpContext httpContext )
         {
             IList<string> requestedProtocols = httpContext.WebSockets.WebSocketRequestedProtocols;
-            return (0 < requestedProtocols.Count) && requestedProtocols.Contains("ship");
+            return (0 < requestedProtocols.Count) && requestedProtocols.Contains( "ship" );
         }
     }
 }

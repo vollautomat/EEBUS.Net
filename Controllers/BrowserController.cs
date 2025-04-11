@@ -21,17 +21,15 @@ namespace EEBUS.Controllers
     {
         private readonly MDNSClient      mDNSClient;
 		private readonly MDNSService     mDNSService;
-		private readonly Settings        settings;
 		private Devices                  devices;
 		private static   ClientWebSocket wsClient;
 
 		private ServerNode model = new ServerNode();
 
-        public BrowserController( MDNSClient mDNSClient, MDNSService mDNSService, IOptions<Settings> options, Devices devices )
+        public BrowserController( MDNSClient mDNSClient, MDNSService mDNSService, Devices devices )
         {
             this.mDNSClient     = mDNSClient;
             this.mDNSService    = mDNSService;
-            this.settings       = options.Value;
             this.devices        = devices;
 
 			this.model.LocalSKI = devices.Local.SKI.ToReadable();
@@ -125,7 +123,7 @@ namespace EEBUS.Controllers
 					Uri        uri        = new Uri( "wss://" + model.Url );
 					HostString hostString = new HostString( uri.Host, uri.Port );
 
-					Client client = new Client( hostString, wsClient, this.settings, this.devices );
+					Client client = new Client( hostString, wsClient, this.devices );
 
                     await client.Run().ConfigureAwait( false );
 					

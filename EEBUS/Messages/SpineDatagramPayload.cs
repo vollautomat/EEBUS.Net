@@ -71,56 +71,43 @@ namespace EEBUS.Messages
 
 			return reply;
 		}
-
-		private AddressType AddressSource
-		{
-			get
-			{
-				AddressType address = new AddressType();
-				address.device  = Server.Settings.Device.Id;
-				address.entity  = [0];
-				address.feature = 0;
-
-				return address;
-			}
-		}
 	}
 
 	[System.SerializableAttribute()]
 	public class DatagramType
 	{
-		public HeaderType header { get; set; } = new();
+		public HeaderType header  { get; set; } = new();
 
-		public JObject payload { get; set; }
+		public JObject	  payload { get; set; }
 	}
 
 	[System.SerializableAttribute()]
 	public class HeaderType
 	{
-		public string specificationVersion { get; set; } = "1.3.0";
+		public string	   specificationVersion { get; set; } = "1.3.0";
 
-		public AddressType addressSource { get; set; }
+		public AddressType addressSource		{ get; set; }
 
-		public AddressType addressDestination { get; set; }
+		public AddressType addressDestination	{ get; set; }
 
-		public ulong msgCounter { get; set; }
-
-		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public ulong? msgCounterReference { get; set; }
-
-		public string cmdClassifier { get; set; }
+		public ulong	   msgCounter			{ get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public bool? ackRequest { get; set; }
+		public ulong?	   msgCounterReference	{ get; set; }
+
+		public string	   cmdClassifier		{ get; set; }
+
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		public bool?	   ackRequest			{ get; set; }
 	}
 
 	[System.SerializableAttribute()]
 	public class AddressType
 	{
-		public string device { get; set; }
+		public string device  { get; set; }
 
-		public int[] entity { get; set; }
+		public int[]  entity  { get; set; }
 
-		public int feature { get; set; }
+		public int	  feature { get; set; }
 	}
 }

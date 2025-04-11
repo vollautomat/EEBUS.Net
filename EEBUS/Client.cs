@@ -13,8 +13,8 @@ namespace EEBUS
 {
 	public class Client : Connection
 	{
-		public Client( HostString host, WebSocket ws, Settings settings, Devices devices )
-			: base( host, ws, settings, devices )
+		public Client( HostString host, WebSocket ws, Devices devices )
+			: base( host, ws, devices )
 		{
 		}
 

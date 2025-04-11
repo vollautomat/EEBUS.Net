@@ -19,20 +19,20 @@ namespace EEBUS.SPINE.Commands
 				NodeManagementDetailedDiscoveryData		payload = new NodeManagementDetailedDiscoveryData();
 				NodeManagementDetailedDiscoveryDataType data	= payload.cmd[0].nodeManagementDetailedDiscoveryData;
 
-				data.deviceInformation.description.deviceAddress.device								= Server.Settings.Device.Id;
-				data.deviceInformation.description.deviceType										= "EnergyManagementSystem";
-				data.deviceInformation.description.networkFeatureSet								= "smart";
+				data.deviceInformation.description.deviceAddress.device								= connection.Local.Id;
+				data.deviceInformation.description.deviceType										= connection.Local.Type;
+				data.deviceInformation.description.networkFeatureSet								= connection.Local.NetworkFeatureSet;
 
 				data.entityInformation = [new(), new()];
-				data.entityInformation[0].description.entityAddress.device							= Server.Settings.Device.Id;
+				data.entityInformation[0].description.entityAddress.device							= connection.Local.Id;
 				data.entityInformation[0].description.entityAddress.entity							= [0];
 				data.entityInformation[0].description.entityType									= "DeviceInformation";
-				data.entityInformation[1].description.entityAddress.device							= Server.Settings.Device.Id;
+				data.entityInformation[1].description.entityAddress.device							= connection.Local.Id;
 				data.entityInformation[1].description.entityAddress.entity							= [1];
 				data.entityInformation[1].description.entityType									= "CEM";
 
 				data.featureInformation = [new(), new(), new(), new(), new(), new(), new()];
-				data.featureInformation[0].description.featureAddress.device						= Server.Settings.Device.Id;
+				data.featureInformation[0].description.featureAddress.device						= connection.Local.Id;
 				data.featureInformation[0].description.featureAddress.entity						= [0];
 				data.featureInformation[0].description.featureAddress.feature						= 0;
 				data.featureInformation[0].description.featureType									= "NodeManagement";
@@ -61,7 +61,7 @@ namespace EEBUS.SPINE.Commands
 
 				data.featureInformation[0].description.supportedFunction[8].function				= "nodeManagementBindingRequestCall";
 
-				data.featureInformation[1].description.featureAddress.device						= Server.Settings.Device.Id;
+				data.featureInformation[1].description.featureAddress.device						= connection.Local.Id;
 				data.featureInformation[1].description.featureAddress.entity						= [0];
 				data.featureInformation[1].description.featureAddress.feature						= 1;
 				data.featureInformation[1].description.featureType									= "DeviceClassification";
@@ -70,14 +70,14 @@ namespace EEBUS.SPINE.Commands
 				data.featureInformation[1].description.supportedFunction[0].function				= "deviceClassificationManufacturerData";
 				data.featureInformation[1].description.supportedFunction[0].possibleOperations.read = new();
 
-				data.featureInformation[2].description.featureAddress.device						= Server.Settings.Device.Id;
+				data.featureInformation[2].description.featureAddress.device						= connection.Local.Id;
 				data.featureInformation[2].description.featureAddress.entity						= [1];
 				data.featureInformation[2].description.featureAddress.feature						= 1;
 				data.featureInformation[2].description.featureType									= "DeviceDiagnosis";
 				data.featureInformation[2].description.role											= "client";
 				data.featureInformation[2].description.description									= "DeviceDiagnosis Client";
 
-				data.featureInformation[3].description.featureAddress.device						= Server.Settings.Device.Id;
+				data.featureInformation[3].description.featureAddress.device						= connection.Local.Id;
 				data.featureInformation[3].description.featureAddress.entity						= [1];
 				data.featureInformation[3].description.featureAddress.feature						= 2;
 				data.featureInformation[3].description.featureType									= "LoadControl";
@@ -90,7 +90,7 @@ namespace EEBUS.SPINE.Commands
 				data.featureInformation[3].description.supportedFunction[1].possibleOperations.write = new { partial = new {} };
 				data.featureInformation[3].description.description									 = "LoadControl Server";
 
-				data.featureInformation[4].description.featureAddress.device						= Server.Settings.Device.Id;
+				data.featureInformation[4].description.featureAddress.device						= connection.Local.Id;
 				data.featureInformation[4].description.featureAddress.entity						= [1];
 				data.featureInformation[4].description.featureAddress.feature						= 3;
 				data.featureInformation[4].description.featureType									= "DeviceConfiguration";
@@ -103,7 +103,7 @@ namespace EEBUS.SPINE.Commands
 				data.featureInformation[4].description.supportedFunction[1].possibleOperations.write = new { partial = new {} };
 				data.featureInformation[4].description.description									 = "DeviceConfiguration Server";
 
-				data.featureInformation[5].description.featureAddress.device						= Server.Settings.Device.Id;
+				data.featureInformation[5].description.featureAddress.device						= connection.Local.Id;
 				data.featureInformation[5].description.featureAddress.entity						= [1];
 				data.featureInformation[5].description.featureAddress.feature						= 4;
 				data.featureInformation[5].description.featureType									= "DeviceDiagnosis";
@@ -113,7 +113,7 @@ namespace EEBUS.SPINE.Commands
 				data.featureInformation[5].description.supportedFunction[0].possibleOperations.read	= new();
 				data.featureInformation[5].description.description									= "DeviceDiagnosis Server";
 
-				data.featureInformation[6].description.featureAddress.device						= Server.Settings.Device.Id;
+				data.featureInformation[6].description.featureAddress.device						= connection.Local.Id;
 				data.featureInformation[6].description.featureAddress.entity						= [1];
 				data.featureInformation[6].description.featureAddress.feature						= 5;
 				data.featureInformation[6].description.featureType									= "ElectricalConnection";
