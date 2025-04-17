@@ -33,12 +33,12 @@ namespace EEBUS.SHIP.Messages
 
 		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			return (Connection.EState.Stop, Connection.ESubState.None);
+			return (Connection.EState.Stopped, Connection.ESubState.None);
 		}
 
 		public override async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection )
 		{
-			return (Connection.EState.Stop, Connection.ESubState.None);
+			return (Connection.EState.Stopped, Connection.ESubState.None);
 		}
 	}
 

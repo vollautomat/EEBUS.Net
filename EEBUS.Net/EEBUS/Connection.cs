@@ -22,7 +22,7 @@ namespace EEBUS
 
 		public enum EState
 		{
-			WaitingForInit,
+			Unconnected,
 			WaitingForConnectionHello,
 			WaitingForProtocolHandshake,
 			SendProtocolHandshakeError,
@@ -32,7 +32,7 @@ namespace EEBUS
 			WaitingForAccessMethodsRequest,
 			WaitingForAccessMethods,
 			Connected,
-			Stop,
+			Stopped,
 			ErrorOrTimeout
 		}
 
@@ -98,6 +98,14 @@ namespace EEBUS
 			{
 				return this.devices.Local;
 			}
+		}
+
+		protected RemoteDevice GetRemote( string id )
+		{
+			if ( null == id )
+				return null;
+
+			return this.devices.GetRemote( id );
 		}
 
 		public void SetHeartbeatAddresses( AddressType source, AddressType destination )

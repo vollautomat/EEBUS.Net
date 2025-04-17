@@ -16,11 +16,19 @@ namespace EEBUS
 {
 	public class MDNSService
 	{
-        public MDNSService( IConfiguration configuration, IOptions<Settings> options )
-        {
-            this.settings = options.Value;
+		public MDNSService( IOptions<Settings> options )
+		{
+			this.settings = options.Value;
 
-			this.serviceProfile = new EEBusServiceProfile( Dns.GetHostName(), settings.Device.Id, "_ship._tcp", settings.Device.Port );
+			this.serviceProfile = new EEBusServiceProfile( Dns.GetHostName(), this.settings.Device.Id, "_ship._tcp", this.settings.Device.Port );
+		}
+
+		public MDNSService( IConfigurationSection settings )
+		{
+			this.settings = settings.Get<Settings>();
+			this.settings.Device.Port = 7134;
+
+			this.serviceProfile = new EEBusServiceProfile( Dns.GetHostName(), this.settings.Device.Id, "_ship._tcp", this.settings.Device.Port );
 		}
 
 		private ServiceProfile    serviceProfile;
@@ -28,32 +36,32 @@ namespace EEBUS
 		private readonly Settings settings;
 
 		public void AddProperty( string key, string value )
-        {
-            this.serviceProfile.AddProperty( key, value );
-        }
+		{
+			this.serviceProfile.AddProperty( key, value );
+		}
 
-        public X509Certificate2 Cert
-        {
-            get
-            {
-                return this.cert;
-            }
-        }
+		public X509Certificate2 Cert
+		{
+			get
+			{
+				return this.cert;
+			}
+		}
 
-        public void Run( Devices devices )
-        {
-            _ = Task.Run( async() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
+		public void Run( Devices devices )
+		{
+			_ = Task.Run( async() =>
+			{
+				Thread.CurrentThread.IsBackground = true;
 
-                MulticastService mdns = new MulticastService();
-                ServiceDiscovery sd   = new ServiceDiscovery( mdns );
+				MulticastService mdns = new MulticastService();
+				ServiceDiscovery sd   = new ServiceDiscovery( mdns );
 
 				cert = CertificateGenerator.GenerateCert( Dns.GetHostName() );
 
 				byte[] hash = SHA1.Create().ComputeHash( cert.GetPublicKey() );
 
-                LocalDevice localDevice = devices.GetOrCreateLocal( hash, settings );
+				LocalDevice localDevice = devices.GetOrCreateLocal( hash, settings );
 
 				// configure our EEBUS mDNS properties
 				AddProperty( "name",     localDevice.Name );
@@ -68,22 +76,22 @@ namespace EEBUS
 
 				try
 				{
-                    mdns.Start();
+					mdns.Start();
 
-                    sd.Advertise( this.serviceProfile );
+					sd.Advertise( this.serviceProfile );
 
-                    await Task.Delay( -1 ).ConfigureAwait( false );
-                }
-                catch ( Exception ex )
-                {
-                    Console.WriteLine( ex.Message );
-                }
-                finally
-                {
-                    sd.Dispose();
-                    mdns.Stop();
-                }
-            } );
-        }
-    }
+					await Task.Delay( -1 ).ConfigureAwait( false );
+				}
+				catch ( Exception ex )
+				{
+					Console.WriteLine( ex.Message );
+				}
+				finally
+				{
+					sd.Dispose();
+					mdns.Stop();
+				}
+			} );
+		}
+	}
 }

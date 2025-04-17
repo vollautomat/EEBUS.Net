@@ -48,23 +48,23 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class UseCaseInformationType
 	{
-		public AddressType address { get; set; } = new();
+		public AddressType			address		   { get; set; } = new();
 
-		public string actor { get; set; }
+		public string				actor		   { get; set; }
 
-		public UseCaseSupportType[] useCaseSupport { get; set; } = [new()];
+		public UseCaseSupportType[]	useCaseSupport { get; set; } = [new()];
 	}
 
 	[System.SerializableAttribute()]
 	public class UseCaseSupportType
 	{
-		public string useCaseName { get; set; }
+		public string useCaseName				 { get; set; }
 
-		public string useCaseVersion { get; set; }
+		public string useCaseVersion			 { get; set; }
 
-		public bool useCaseAvailable { get; set; }
+		public bool	  useCaseAvailable			 { get; set; }
 
-		public int[] scenarioSupport { get; set; }
+		public int[]  scenarioSupport			 { get; set; }
 
 		public string useCaseDocumentSubRevision { get; set; }
 	}

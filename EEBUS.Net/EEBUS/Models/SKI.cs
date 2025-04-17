@@ -13,6 +13,7 @@ namespace EEBUS.Models
 
 		public SKI( string ski )
 		{
+			ski = ski.Replace( " ", "" );
 			this.ski = Enumerable.Range( 0, ski.Length / 2 )
 								 .Select( x => Convert.ToByte( ski.Substring( x * 2, 2 ), 16 ) )
 								 .ToArray();

@@ -48,13 +48,13 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class DeviceConfigurationKeyValueDescriptionDataType
 	{
-		public int keyId { get; set; }
+		public int	  keyId		{ get; set; }
 
-		public string keyName { get; set; }
+		public string keyName	{ get; set; }
 
-		public string valueType { get; set; }
+		public string valueType	{ get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public string unit { get; set; }
+		public string unit		{ get; set; }
 	}
 }

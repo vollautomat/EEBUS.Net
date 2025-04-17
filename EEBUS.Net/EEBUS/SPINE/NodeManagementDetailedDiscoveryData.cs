@@ -139,11 +139,11 @@ namespace EEBUS.SPINE.Commands
 	{
 		public SpecificationVersionListType specificationVersionList { get; set; } = new();
 
-		public DeviceInformationType		deviceInformation { get; set; } = new();
+		public DeviceInformationType		deviceInformation		 { get; set; } = new();
 
-		public EntityInformationType[]		entityInformation { get; set; }
+		public EntityInformationType[]		entityInformation		 { get; set; }
 
-		public FeatureInformationType[]		featureInformation { get; set; }
+		public FeatureInformationType[]		featureInformation		 { get; set; }
 	}
 
 	[System.SerializableAttribute()]
@@ -161,9 +161,9 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class DeviceInformationDescriptionType
 	{
-		public DeviceAddressType deviceAddress { get; set; } = new();
+		public DeviceAddressType deviceAddress	   { get; set; } = new();
 		
-		public string			 deviceType { get; set; }
+		public string			 deviceType		   { get; set; }
 		
 		public string			 networkFeatureSet { get; set; }
 	}
@@ -185,7 +185,7 @@ namespace EEBUS.SPINE.Commands
 	{
 		public EntityAddressType entityAddress { get; set; } = new();
 		
-		public string			 entityType { get; set; }
+		public string			 entityType	   { get; set; }
 	}
 
 	[System.SerializableAttribute()]
@@ -205,25 +205,25 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class FeatureInformationDescriptionType
 	{
-		public FeatureAddressType	   featureAddress { get; set; } = new();
+		public FeatureAddressType	   featureAddress	 { get; set; } = new();
 		
-		public string				   featureType { get; set; }
+		public string				   featureType		 { get; set; }
 		
-		public string role { get; set; }
+		public string				   role				 { get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public SupportedFunctionType[] supportedFunction { get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public string				   description { get; set; }
+		public string				   description		 { get; set; }
 	}
 
 	[System.SerializableAttribute()]
 	public class FeatureAddressType
 	{
-		public string device { get; set; }
+		public string device  { get; set; }
 		
-		public int[]  entity { get; set; }
+		public int[]  entity  { get; set; }
 		
 		public int	  feature { get; set; }
 	}
@@ -231,7 +231,7 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class SupportedFunctionType
 	{
-		public string				  function { get; set; }
+		public string				  function			 { get; set; }
 		
 		public PossibleOperationsType possibleOperations { get; set; } = new();
 	}
@@ -240,7 +240,7 @@ namespace EEBUS.SPINE.Commands
 	public class PossibleOperationsType
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public object read { get; set; }
+		public object read  { get; set; }
 		
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public object write { get; set; }

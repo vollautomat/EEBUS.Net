@@ -113,23 +113,23 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class LoadControlLimitDataType
 	{
-		public uint limitId { get; set; }
+		public uint				limitId			  { get; set; }
 
-		public bool isLimitChangeable { get; set; }
+		public bool				isLimitChangeable { get; set; }
 
-		public bool isLimitActive { get; set; }
+		public bool				isLimitActive	  { get; set; }
 
-		public TimePeriodType timePeriod { get; set; } = new();
+		public TimePeriodType	timePeriod		  { get; set; } = new();
 
-		public ScaledNumberType value { get; set; } = new();
+		public ScaledNumberType	value			  { get; set; } = new();
 	}
 
 	[System.SerializableAttribute()]
 	public class TimePeriodType
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public string startTime { get; set; }
+		public string startTime	{ get; set; }
 
-		public string endTime { get; set; }
+		public string endTime	{ get; set; }
 	}
 }

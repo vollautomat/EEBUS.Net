@@ -66,11 +66,11 @@ namespace EEBUS.SHIP.Messages
 			{
 				this.connectionHello.phase = ConnectionHelloPhaseType.aborted;
 				await Send( connection.WebSocket ).ConfigureAwait( false );
-				return (Connection.EState.Stop, Connection.ESubState.None);
+				return (Connection.EState.Stopped, Connection.ESubState.None);
 			}
 
 			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.aborted )
-				return (Connection.EState.Stop, Connection.ESubState.None);
+				return (Connection.EState.Stopped, Connection.ESubState.None);
 
 			throw new Exception( "Hello aborted!" );
 		}
@@ -98,10 +98,10 @@ namespace EEBUS.SHIP.Messages
 			}
 
 			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.pending && connection.SubState == Connection.ESubState.SecondPending )
-				return (Connection.EState.Stop, Connection.ESubState.None);
+				return (Connection.EState.Stopped, Connection.ESubState.None);
 
 			if ( connection.State == Connection.EState.WaitingForConnectionHello && this.connectionHello.phase == ConnectionHelloPhaseType.aborted )
-				return (Connection.EState.Stop, Connection.ESubState.None);
+				return (Connection.EState.Stopped, Connection.ESubState.None);
 
 			throw new Exception( "Was waiting for Init" );
 		}
@@ -110,11 +110,11 @@ namespace EEBUS.SHIP.Messages
 	[System.SerializableAttribute()]
 	public partial class ConnectionHelloType
 	{
-		public ConnectionHelloPhaseType phase { get; set; }
+		public ConnectionHelloPhaseType phase				{ get; set; }
 
-		public uint waiting { get; set; }
+		public uint						waiting				{ get; set; }
 
-		public bool prolongationRequest { get; set; }
+		public bool						prolongationRequest	{ get; set; }
 	}
 
 	[System.SerializableAttribute()]

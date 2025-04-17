@@ -21,16 +21,24 @@ namespace EEBUS
 		public Server( HostString host, WebSocket ws, Devices devices )
 			: base( host, ws, devices )
 		{
+			serverMap[host] = this;
 		}
 
 		static private ConcurrentDictionary<HostString, Server> serverMap = new();
+
+		private RemoteDevice remoteDevice = null;
+
+		//static private object mutex = new();
 		
 		static public Server Get( HostString host )
 		{
-			if ( ! serverMap.TryGetValue( host, out Server server ) )
-				return null;
+			//lock ( mutex )
+			//{
+				if ( ! serverMap.TryGetValue( host, out Server server ) )
+					return null;
 
-			return server;
+				return server;
+			//}
 		}
 
 		public async Task Do()
@@ -40,17 +48,17 @@ namespace EEBUS
 			
 			try
 			{
-                while ( this.ws.State == WebSocketState.Open )
-                {
+				while ( this.ws.State == WebSocketState.Open )
+				{
 					byte[] receiveBuffer = new byte[10240];
 					WebSocketReceiveResult result = await this.ws.ReceiveAsync( receiveBuffer, new CancellationTokenSource( /*SHIPMessageTimeout.CMI_TIMEOUT*/ ).Token ).ConfigureAwait( false );
 
-					if ( result.CloseStatus.HasValue )						
+					if ( result.CloseStatus.HasValue )
 						break; // close received
 					else if ( result.Count < 2 )
 						throw new Exception( "Invalid EEBUS payload received, expected message size of at least 2!" );
 
-					ShipMessageBase message = ShipMessageBase.Create( receiveBuffer, this );					
+					ShipMessageBase message = ShipMessageBase.Create( receiveBuffer, this );
 					if ( message == null )
 						throw new Exception( "Message couldn't be recognized" );
 
@@ -58,19 +66,28 @@ namespace EEBUS
 
 					(this.state, this.subState, string error) = message.ServerTest( this.state );
 
-					if ( this.state == EState.Stop && error != null )
+					if ( this.state == EState.Stopped && error != null )
 						throw new Exception( error );
 					if ( error != null )
 						Console.WriteLine( error );
 
 					(this.state, this.subState) = await message.NextServerState( this ).ConfigureAwait( false );
 
-					if ( this.state == EState.Stop )
+					if ( null == this.remoteDevice )
+						this.remoteDevice = GetRemote( message.GetDeviceId() );
+
+					if ( null != this.remoteDevice )
+						this.remoteDevice.SetServerState( this.state );
+
+					if ( this.state == EState.Stopped )
 						throw new Exception( "Communication stopped!" );
 				}
 			}
 			catch ( Exception ex )
 			{
+				if ( null != this.remoteDevice )
+					this.remoteDevice.SetServerState( EState.Stopped );
+
 				Debug.WriteLine( "Exception: " + ex.Message );
 			}
 

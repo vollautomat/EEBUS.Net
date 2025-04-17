@@ -48,22 +48,22 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class LoadControlLimitDescriptionDataType
 	{
-		public uint limitId { get; set; }
+		public uint	  limitId		 { get; set; }
 
-		public string limitType { get; set; }
+		public string limitType		 { get; set; }
 
-		public string limitCategory { get; set; }
+		public string limitCategory	 { get; set; }
 
 		public string limitDirection { get; set; }
 
-		public uint measurementId { get; set; }
+		public uint	  measurementId	 { get; set; }
 		
-		public string unit { get; set; }
-		
-		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)] 
-		public string scopeType { get; set; }
+		public string unit			 { get; set; }
 		
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)] 
-		public string label { get; set; }
+		public string scopeType		 { get; set; }
+		
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)] 
+		public string label			 { get; set; }
 	}
 }

@@ -9,6 +9,7 @@
     },
     "EEBUS.Net": {
       "commandName": "Project",
+      "commandLineArgs": "--use-system-ssl",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

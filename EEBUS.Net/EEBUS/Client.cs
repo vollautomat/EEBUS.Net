@@ -13,14 +13,17 @@ namespace EEBUS
 {
 	public class Client : Connection
 	{
-		public Client( HostString host, WebSocket ws, Devices devices )
+		public Client( HostString host, WebSocket ws, Devices devices, RemoteDevice remoteDevice )
 			: base( host, ws, devices )
 		{
+			this.remoteDevice = remoteDevice;
 		}
+
+		private RemoteDevice remoteDevice;
 
 		public async Task<bool> Run()
 		{
-			this.state	  = EState.WaitingForInit;
+			this.state	  = EState.Unconnected;
 			this.subState = ESubState.None;
 
 			InitMessage initMessage = new InitMessage();
@@ -31,7 +34,7 @@ namespace EEBUS
 
 			try
 			{
-				while ( this.state != EState.Stop )
+				while ( this.state != EState.Stopped )
 				{
 					byte[] receiveBuffer = new byte[10240];
 					WebSocketReceiveResult result = await this.ws.ReceiveAsync( receiveBuffer, new CancellationTokenSource( SHIPMessageTimeout.CMI_TIMEOUT ).Token ).ConfigureAwait( false );
@@ -47,14 +50,17 @@ namespace EEBUS
 
 					(this.state, this.subState, string error) = message.ClientTest( this.state );
 
-					if ( this.state == EState.Stop && error != null )
+					if ( this.state == EState.Stopped && error != null )
 						throw new Exception( error );
 					if ( error != null )
 						Console.WriteLine( error );
 
 					(this.state, this.subState) = await message.NextClientState( this ).ConfigureAwait( false );
 
-					//if ( this.state == State.Stop )
+					if ( null != this.remoteDevice )
+						this.remoteDevice.SetClientState( this.state );
+
+					//if ( this.state == State.Stopped )
 					//	throw new Exception( "Communication stopped!" );
 					//else if ( this.state == State.Connected )
 					//	break;
@@ -63,6 +69,9 @@ namespace EEBUS
 			finally
 			{
 				beat.Change( Timeout.Infinite, Timeout.Infinite );
+
+				if ( null != this.remoteDevice )
+					this.remoteDevice.SetClientState( EState.Stopped );
 			}
 
 			return true;

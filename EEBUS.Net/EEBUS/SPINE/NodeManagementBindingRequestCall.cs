@@ -38,10 +38,10 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class BindingRequestType
 	{
-		public AddressType clientAddress { get; set; }
+		public AddressType clientAddress	 { get; set; }
 
-		public AddressType serverAddress { get; set; }
+		public AddressType serverAddress	 { get; set; }
 
-		public string serverFeatureType { get; set; }
+		public string	   serverFeatureType { get; set; }
 	}
 }

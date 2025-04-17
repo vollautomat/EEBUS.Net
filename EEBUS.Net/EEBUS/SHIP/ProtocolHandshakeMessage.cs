@@ -175,11 +175,11 @@ namespace EEBUS.SHIP.Messages
 	[System.SerializableAttribute()]
 	public class MessageProtocolHandshakeType
 	{
-		public ProtocolHandshakeTypeType handshakeType { get; set; } = new();
+		public ProtocolHandshakeTypeType		   handshakeType { get; set; } = new();
 
-		public MessageProtocolHandshakeTypeVersion version { get; set; } = new();
+		public MessageProtocolHandshakeTypeVersion version		 { get; set; } = new();
 
-		public MessageProtocolHandshakeTypeFormats formats { get; set; } = new( SHIPMessageFormat.JSON_UTF8 );
+		public MessageProtocolHandshakeTypeFormats formats		 { get; set; } = new( SHIPMessageFormat.JSON_UTF8 );
 
 		public bool IsEqual( MessageProtocolHandshakeType other )
 		{

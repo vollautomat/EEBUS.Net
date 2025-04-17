@@ -25,13 +25,18 @@ namespace EEBUS.SHIP.Messages
 		}
 
 		public AccessMethodsType accessMethods { get; set; } = new();
-		
+
+		public override string GetDeviceId()
+		{
+			return this.accessMethods.id;
+		}
+
 		public new class Class : ShipControlMessage<AccessMethodsMessage>.Class
 		{
 			public override AccessMethodsMessage Create( byte[] data, Connection connection )
 			{
 				return template.FromJsonVirtual( data, connection );
-			} 			
+			}
 		}
 
 		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
@@ -60,13 +65,13 @@ namespace EEBUS.SHIP.Messages
 	public class AccessMethodsType
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)] 
-		public string id { get; set; }
+		public string					   id		  { get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)] 
 		public AccessMethodsTypeDnsSd_mDns dnsSd_mDns { get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)] 
-		public AccessMethodsTypeDns dns { get; set; }
+		public AccessMethodsTypeDns		   dns		  { get; set; }
 	}
 
 	/// <remarks/>

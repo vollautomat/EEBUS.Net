@@ -25,5 +25,14 @@ namespace EEBUS.Models
 		public string Serial			{ get; private set; }
 
 		public string NetworkFeatureSet { get; private set; }
+
+		public string ShipID
+		{
+			get
+			{
+				return "SHIP;SKI:" + this.SKI.ToString() + ",ID:" + this.Name + ";BRAND:" + this.Brand
+					+ ";TYPE:" + this.Type + ";MODEL:" + this.Model + ";SERIAL:" + this.Serial + ";CAT:1;ENDSHIP;";
+			}
+		}
 	}
 }

@@ -45,12 +45,12 @@ namespace EEBUS.SHIP.Messages
 			if ( this.connectionPinState.pinState != PinStateType.none )
 			{
 				error = "Pinstate none expected!";
-				newState = Connection.EState.Stop;
+				newState = Connection.EState.Stopped;
 			}
 			if (this.connectionPinState.inputPermissionSpecified != false)
 			{
 				error = "Pinstate inputPermissionSpecified expected!";
-				newState = Connection.EState.Stop;
+				newState = Connection.EState.Stopped;
 			}
 
 			return (newState, Connection.ESubState.None, error);
@@ -75,12 +75,12 @@ namespace EEBUS.SHIP.Messages
 			if ( this.connectionPinState.pinState != PinStateType.none )
 			{
 				error = "Pinstate none expected!";
-				newState = Connection.EState.Stop;
+				newState = Connection.EState.Stopped;
 			}
 			if (this.connectionPinState.inputPermissionSpecified != false)
 			{
 				error = "Pinstate inputPermissionSpecified expected!";
-				newState = Connection.EState.Stop;
+				newState = Connection.EState.Stopped;
 			}
 
 			return (newState, Connection.ESubState.None, error);
@@ -103,9 +103,9 @@ namespace EEBUS.SHIP.Messages
 	[System.SerializableAttribute()]
 	public class ConnectionPinStateType
 	{
-		public PinStateType pinState { get; set; }
+		public PinStateType	pinState				 { get; set; }
 
-		public bool inputPermissionSpecified { get; set; }
+		public bool			inputPermissionSpecified { get; set; }
 	}
 
 	/// <remarks/>

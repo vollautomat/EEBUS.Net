@@ -21,106 +21,105 @@ using EEBUS.Models;
 
 namespace EEBUS
 {
-    public class Startup
-    {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+	public class Startup
+	{
+		public Startup( IConfiguration configuration )
+		{
+			Configuration = configuration;
+		}
 
-        public IConfiguration Configuration { get; }
+		public IConfiguration Configuration { get; }
 
-        private bool ValidateClientCert(X509Certificate2 certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            // auto accept mode is active, register flag is set in discovery service
-            return true;
-        }
+		private bool ValidateClientCert( X509Certificate2 certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors )
+		{
+			// auto accept mode is active, register flag is set in discovery service
+			return true;
+		}
 
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices( IServiceCollection services )
-        {
-            services.AddControllersWithViews();
+		// This method gets called by the runtime. Use this method to add services to the container.
+		public void ConfigureServices( IServiceCollection services )
+		{
+			services.AddControllersWithViews();
 
-            services.Configure<KestrelServerOptions>( kestrelOptions =>
-            {
-                kestrelOptions.ConfigureHttpsDefaults( httpOptions =>
-                {
-                    httpOptions.ServerCertificate           = CertificateGenerator.GenerateCert( Dns.GetHostName() );
-                    httpOptions.ClientCertificateMode       = ClientCertificateMode.RequireCertificate;
-                    httpOptions.ClientCertificateValidation = ValidateClientCert;
-                    httpOptions.SslProtocols                = SslProtocols.Tls12;
-                    httpOptions.OnAuthenticate              = (connectionContext, authenticationOptions) =>
-                    {
-                        authenticationOptions.EnabledSslProtocols = SslProtocols.Tls12;
-                    };
-                } );
-            } );
+			services.Configure<KestrelServerOptions>( kestrelOptions =>
+			{
+				kestrelOptions.ConfigureHttpsDefaults( httpOptions =>
+				{
+					httpOptions.ServerCertificate           = CertificateGenerator.GenerateCert( Dns.GetHostName() );
+					httpOptions.ClientCertificateMode       = ClientCertificateMode.RequireCertificate;
+					httpOptions.ClientCertificateValidation = ValidateClientCert;
+					httpOptions.SslProtocols                = SslProtocols.Tls12;
+					httpOptions.OnAuthenticate              = (connectionContext, authenticationOptions) =>
+					{
+						authenticationOptions.EnabledSslProtocols = SslProtocols.Tls12;
+					};
+				} );
+			} );
 			services.Configure<Settings>( Configuration.GetSection( "Settings" ) );
 			
-            services.AddAuthentication( CertificateAuthenticationDefaults.AuthenticationScheme ).AddCertificate( options =>
-            {
-                options.AllowedCertificateTypes = CertificateTypes.All;
-            } );
+			services.AddAuthentication( CertificateAuthenticationDefaults.AuthenticationScheme ).AddCertificate( options =>
+			{
+				options.AllowedCertificateTypes = CertificateTypes.All;
+			} );
 
-            services.AddAuthorization();
+			services.AddAuthorization();
 
-            services.AddSingleton<Settings>();
-            services.AddSingleton<MDNSClient>();
-            services.AddSingleton<MDNSService>();
+			services.AddSingleton<Settings>();
+			services.AddSingleton<MDNSClient>();
+			services.AddSingleton<MDNSService>();
 			services.AddSingleton<Devices>();
-            //services.AddSingleton<SPINE>();
-        }
+		}
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure( IApplicationBuilder app, IWebHostEnvironment env, MDNSClient mDNSClient, MDNSService mDNSService, Devices devices )
-        {
-            if ( env.IsDevelopment() )
-            {
-                app.UseDeveloperExceptionPage();
-            }
+		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+		public void Configure( IApplicationBuilder app, IWebHostEnvironment env, MDNSClient mDNSClient, MDNSService mDNSService, Devices devices )
+		{
+			if ( env.IsDevelopment() )
+			{
+				app.UseDeveloperExceptionPage();
+			}
 
-            app.UseHttpsRedirection();
+			app.UseHttpsRedirection();
 
-            app.UseAuthentication();
+			app.UseAuthentication();
 
-            app.UseStaticFiles();
+			app.UseStaticFiles();
 
-            app.UseRouting();
+			app.UseRouting();
 
-            app.UseEndpoints( endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            } );
+			app.UseEndpoints( endpoints =>
+			{
+				endpoints.MapControllerRoute(
+					name: "default",
+					pattern: "{controller=Home}/{action=Index}/{id?}");
+			} );
 
-            var webSocketOptions = new WebSocketOptions
-            {
-                KeepAliveInterval = TimeSpan.FromSeconds( 50 )
-            };
+			var webSocketOptions = new WebSocketOptions
+			{
+				KeepAliveInterval = TimeSpan.FromSeconds( 50 )
+			};
 
-            app.UseWebSockets( webSocketOptions );
+			app.UseWebSockets( webSocketOptions );
 
-            app.UseMiddleware<SHIPMiddleware>();
+			app.UseMiddleware<SHIPMiddleware>();
 
 			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.SHIP.Messages" ) )
-			    RuntimeHelpers.RunClassConstructor( type.TypeHandle );
+				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
 
-            foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.SPINE.Commands" ) )
-			    RuntimeHelpers.RunClassConstructor( type.TypeHandle );
+			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.SPINE.Commands" ) )
+				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
 
 			// start our mDNS services
 			mDNSClient.Run( devices );
-            mDNSService.Run( devices );
-        }
+			mDNSService.Run( devices );
+		}
 
 		private Type[] GetTypesInNamespace( Assembly assembly, string nameSpace )
 		{
 			return
-			  assembly.GetTypes()
-					  .Where( t => String.Equals( t.Namespace, nameSpace, StringComparison.Ordinal ) )
-					  .ToArray();
+				assembly.GetTypes()
+						.Where( t => String.Equals( t.Namespace, nameSpace, StringComparison.Ordinal ) )
+						.ToArray();
 		}
 	}
 }

@@ -51,9 +51,9 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class DeviceDiagnosisHeartbeatDataType
 	{
-		public string timestamp { get; set; } = DateTime.UtcNow.ToString( "s" ) + "Z";
+		public string timestamp		   { get; set; } = DateTime.UtcNow.ToString( "s" ) + "Z";
 
-		public ulong heartbeatCounter { get; set; }
+		public ulong  heartbeatCounter { get; set; }
 
 		public string heartbeatTimeout { get; set; } = "PT4S";
 	}

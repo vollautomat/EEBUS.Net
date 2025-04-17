@@ -38,19 +38,19 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class SubscriptionRequestType
 	{
-		public AddressType clientAddress { get; set; }
+		public AddressType clientAddress	 { get; set; }
 
-		public AddressType serverAddress { get; set; }
+		public AddressType serverAddress	 { get; set; }
 
-		public string serverFeatureType { get; set; }
+		public string	   serverFeatureType { get; set; }
 	}
 
 	[System.SerializableAttribute()]
 	public class AddressType
 	{
-		public string device { get; set; }
+		public string device  { get; set; }
 
-		public int[] entity { get; set; }
+		public int[]  entity  { get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public string feature { get; set; }

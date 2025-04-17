@@ -23,6 +23,11 @@ namespace EEBUS.Messages
 
 		protected Connection connection;
 
+		public virtual string GetDeviceId()
+		{
+			return null;
+		}
+
 		public abstract ShipMessageBase FromJsonVirtual( byte[] data, Connection connection );
 
 		static public ShipMessageBase Create( byte[] data, Connection connection )

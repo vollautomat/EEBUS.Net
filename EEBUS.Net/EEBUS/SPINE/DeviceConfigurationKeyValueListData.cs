@@ -50,30 +50,30 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class DeviceConfigurationKeyValueDataType
 	{
-		public int keyId { get; set; }
+		public int		 keyId			   { get; set; }
 
-		public ValueType value { get; set; } = new();
+		public ValueType value			   { get; set; } = new();
 
-		public bool isValueChangeable { get; set; }
+		public bool		 isValueChangeable { get; set; }
 	}
 
 	[System.SerializableAttribute()]
 	public class ValueType
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public ScaledNumberType scaledNumber { get; set; }
+		public ScaledNumberType	scaledNumber { get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public string duration { get; set; }
+		public string			duration	 { get; set; }
 	}
 
 	[System.SerializableAttribute()]
 	public class ScaledNumberType
 	{
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public long number { get; set; }
+		public long  number	{ get; set; }
 
 		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public short scale { get; set; }
+		public short scale	{ get; set; }
 	}
 }

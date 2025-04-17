@@ -100,12 +100,12 @@ namespace EEBUS.SHIP.Messages
 	[System.SerializableAttribute()]
 	public class DataType
 	{
-		public ShipHeaderType header { get; set; } = new();
+		public ShipHeaderType header	{ get; set; } = new();
 
-		public JObject payload { get; set; }
+		public JObject		  payload	{ get; set; }
 
 		[JsonProperty( NullValueHandling = NullValueHandling.Ignore )]
-		public ExtensionType extension { get; set; }
+		public ExtensionType  extension	{ get; set; }
 	}
 
 	/// <remarks/>
@@ -120,8 +120,8 @@ namespace EEBUS.SHIP.Messages
 	{
 		public string extensionId { get; set; }
 
-		public byte[] binary { get; set; }
+		public byte[] binary	  { get; set; }
 
-		public string @string { get; set; }
+		public string @string	  { get; set; }
 	}
 }
