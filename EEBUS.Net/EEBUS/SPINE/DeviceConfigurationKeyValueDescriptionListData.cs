@@ -19,14 +19,11 @@ namespace EEBUS.SPINE.Commands
 				DeviceConfigurationKeyValueDescriptionListData	   payload = new DeviceConfigurationKeyValueDescriptionListData();
 				DeviceConfigurationKeyValueDescriptionListDataType data	   = payload.cmd[0].deviceConfigurationKeyValueDescriptionListData;
 
-				data.deviceConfigurationKeyValueDescriptionData				 = [new(), new()];
-				data.deviceConfigurationKeyValueDescriptionData[0].keyId	 = 0;
-				data.deviceConfigurationKeyValueDescriptionData[0].keyName	 = "failsafeConsumptionActivePowerLimit";
-				data.deviceConfigurationKeyValueDescriptionData[0].valueType = "scaledNumber";
-				data.deviceConfigurationKeyValueDescriptionData[0].unit		 = "W";
-				data.deviceConfigurationKeyValueDescriptionData[1].keyId	 = 1;
-				data.deviceConfigurationKeyValueDescriptionData[1].keyName	 = "failsafeDurationMinimum";
-				data.deviceConfigurationKeyValueDescriptionData[1].valueType = "duration";
+				List<DeviceConfigurationKeyValueDescriptionDataType> datas = new();
+				foreach ( var keyValue in connection.Local.KeyValues )
+					datas.Add( keyValue.DescriptionData );
+
+				data.deviceConfigurationKeyValueDescriptionData = datas.ToArray();
 
 				return payload;
 			}

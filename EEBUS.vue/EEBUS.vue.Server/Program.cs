@@ -105,6 +105,15 @@ namespace EEBUS.vue.Server
 			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.SPINE.Commands" ) )
 				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
 
+			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.Entities" ) )
+				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
+
+			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.UseCases" ) )
+				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
+
+			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.Features" ) )
+				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
+
 			// start our mDNS services
 			mDNSClient.Run( devices );
 			mDNSService.Run( devices );

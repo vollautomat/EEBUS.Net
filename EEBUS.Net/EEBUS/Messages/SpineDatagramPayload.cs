@@ -56,12 +56,13 @@ namespace EEBUS.Messages
 				return null;
 
 			SpineDatagramPayload reply = new SpineDatagramPayload();
-			reply.datagram.header.addressSource		  = this.datagram.header.addressDestination;
-			reply.datagram.header.addressDestination  = this.datagram.header.addressSource;
-			reply.datagram.header.msgCounter		  = counter;
-			reply.datagram.header.msgCounterReference = this.datagram.header.msgCounter;
-			reply.datagram.header.cmdClassifier		  = GetAnswerCmdClassifier();
-			reply.datagram.header.ackRequest		  = cls.GetAnswerAckRequest();
+			reply.datagram.header.addressSource		   = this.datagram.header.addressDestination;
+			reply.datagram.header.addressSource.device = connection.Local.Id;
+			reply.datagram.header.addressDestination   = this.datagram.header.addressSource;
+			reply.datagram.header.msgCounter		   = counter;
+			reply.datagram.header.msgCounterReference  = this.datagram.header.msgCounter;
+			reply.datagram.header.cmdClassifier		   = GetAnswerCmdClassifier();
+			reply.datagram.header.ackRequest		   = cls.GetAnswerAckRequest();
 
 			SpineCmdPayloadBase payload = await cls.CreateAnswer( this.datagram, reply.datagram.header, connection );
 			if ( null == payload )

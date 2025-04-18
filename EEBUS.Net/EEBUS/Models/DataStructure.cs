@@ -1,6 +1,12 @@
 ﻿namespace EEBUS.Models
 {
-	public class DataStructure
+	public abstract class DataStructure
 	{
+		public DataStructure( string type )
+		{
+			Type = type;
+		}
+
+		protected string Type { get; private set; }
 	}
 }

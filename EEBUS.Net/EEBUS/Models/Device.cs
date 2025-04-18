@@ -19,15 +19,19 @@ namespace EEBUS.Models
 			this.SKI = new SKI( ski );
 		}
 
-		public string	  Id	{ get; private set; }
+		public string			   Id			  { get; private set; }
+								 
+		public string			   Name			  { get; set; }
+								 
+		public SKI				   SKI			  { get; set; }
+								 
+		public string			   Error		  { get; set; }
+								 
+								 
+		public List<Entity>		   Entities		  = new();
+		public List<DataStructure> DataStructures = new();
+		public List<KeyValue>	   KeyValues	  = new();
 
-		public string	  Name	{ get; set; }
-
-		public SKI		  SKI	{ get; set; }
-
-		public string	  Error	{ get; set; }
-
-		
 
 		public override bool Equals( object obj )
 		{
@@ -43,7 +47,36 @@ namespace EEBUS.Models
 			return this.SKI.GetHashCode();
 		}
 
+		public int GetId( KeyValue keyValue )
+		{
+			return this.KeyValues.IndexOf( keyValue );
+		}
 
-		public List<Entity> Entities = new();
+		public void Add( DataStructure dataStructure )
+		{
+			this.DataStructures.Add( dataStructure );
+		}
+
+		public List<T> GetDataStructures<T>() where T : DataStructure
+		{
+			List<T> datas = new();
+
+			foreach ( var data in this.DataStructures )
+				if ( data is T )
+					datas.Add( data as T );
+
+			return datas;
+		}
+
+		public void Add( KeyValue keyValue )
+		{
+			this.KeyValues.Add( keyValue );
+		}
+
+		public void AddUnique( KeyValue keyValue )
+		{
+			if ( ! this.KeyValues.Any( kv => kv.KeyName == keyValue.KeyName ) )
+				this.KeyValues.Add( keyValue );
+		}
 	}
 }

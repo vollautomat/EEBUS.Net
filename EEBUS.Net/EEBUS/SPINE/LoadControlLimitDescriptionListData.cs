@@ -1,4 +1,5 @@
 ﻿
+using EEBUS.DataStructures;
 using EEBUS.Messages;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
@@ -19,14 +20,11 @@ namespace EEBUS.SPINE.Commands
 				LoadControlLimitDescriptionListData	    payload = new LoadControlLimitDescriptionListData();
 				LoadControlLimitDescriptionListDataType data	= payload.cmd[0].loadControlLimitDescriptionListData;
 
-				data.loadControlLimitDescriptionData = [new()];
-				data.loadControlLimitDescriptionData[0].limitId		   = 0;
-				data.loadControlLimitDescriptionData[0].limitType	   = "signDependentAbsValueLimit";
-				data.loadControlLimitDescriptionData[0].limitCategory  = "obligation";
-				data.loadControlLimitDescriptionData[0].limitDirection = "consume";
-				data.loadControlLimitDescriptionData[0].measurementId  = 0;
-				data.loadControlLimitDescriptionData[0].unit		   = "W";
-				data.loadControlLimitDescriptionData[0].scopeType	   = "activePowerLimit";
+				List<LoadControlLimitDescriptionDataType> datas = new();
+				foreach ( LoadControlLimitDataStructure description in connection.Local.GetDataStructures<LoadControlLimitDataStructure>() )
+					datas.Add( description.DescriptionData );
+
+				data.loadControlLimitDescriptionData = datas.ToArray();
 
 				return payload;
 			}

@@ -20,15 +20,11 @@ namespace EEBUS.SPINE.Commands
 				DeviceConfigurationKeyValueListData	    payload = new DeviceConfigurationKeyValueListData();
 				DeviceConfigurationKeyValueListDataType data	= payload.cmd[0].deviceConfigurationKeyValueListData;
 
-				data.deviceConfigurationKeyValueData = [new(), new()];
-				data.deviceConfigurationKeyValueData[0].keyId					  = 0;
-				data.deviceConfigurationKeyValueData[0].value.scaledNumber		  = new();
-				data.deviceConfigurationKeyValueData[0].value.scaledNumber.number = 3600;
-				data.deviceConfigurationKeyValueData[0].value.scaledNumber.scale  = 0;
-				data.deviceConfigurationKeyValueData[0].isValueChangeable		  = true;
-				data.deviceConfigurationKeyValueData[1].keyId					  = 1;
-				data.deviceConfigurationKeyValueData[1].value.duration			  = "PT2H";
-				data.deviceConfigurationKeyValueData[1].isValueChangeable		  = true;
+				List<DeviceConfigurationKeyValueDataType> datas = new();
+				foreach ( var keyValue in connection.Local.KeyValues )
+					datas.Add( keyValue.Data);
+
+				data.deviceConfigurationKeyValueData = datas.ToArray();
 
 				return payload;
 			}

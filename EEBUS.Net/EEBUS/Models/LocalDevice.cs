@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using EEBUS.SPINE.Commands;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EEBUS.Models
 {
@@ -14,6 +16,12 @@ namespace EEBUS.Models
 			this.Model			   = settings.Device.Model;
 			this.Serial			   = settings.Device.Serial;
 			this.NetworkFeatureSet = settings.Device.NetworkFeatureSet;
+
+			int index = 0;
+			foreach ( EntitySettings entitySettings in settings.Device.Entities )
+			{
+				this.Entities.Add( Entity.Create( index++, this, entitySettings ) );
+			}
 		}
 
 		public string Brand				{ get; private set; }
@@ -32,6 +40,42 @@ namespace EEBUS.Models
 			{
 				return "SHIP;SKI:" + this.SKI.ToString() + ",ID:" + this.Name + ";BRAND:" + this.Brand
 					+ ";TYPE:" + this.Type + ";MODEL:" + this.Model + ";SERIAL:" + this.Serial + ";CAT:1;ENDSHIP;";
+			}
+		}
+
+		public DeviceInformationType DeviceInformation
+		{
+			get
+			{
+				DeviceInformationType info = new();
+
+				info.description.deviceAddress.device = this.Id;
+				info.description.deviceType			  = this.Type;
+				info.description.networkFeatureSet	  = this.NetworkFeatureSet;
+
+				return info;
+			}
+		}
+
+		public EntityInformationType[] EntityInformations
+		{
+			get
+			{
+				List<EntityInformationType> infos = new();
+
+				int index = 0;
+				foreach ( Entity entity in this.Entities )
+				{
+					EntityInformationType info = new();
+
+					info.description.entityAddress.device = this.Id;
+					info.description.entityAddress.entity = [index++];
+					info.description.entityType			  = entity.Type;
+
+					infos.Add( info );
+				}
+
+				return infos.ToArray();
 			}
 		}
 	}

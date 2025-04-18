@@ -1,5 +1,6 @@
 ﻿
 using EEBUS.Messages;
+using EEBUS.Models;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 
@@ -19,14 +20,12 @@ namespace EEBUS.SPINE.Commands
 				NodeManagementUseCaseData	  payload = new NodeManagementUseCaseData();
 				NodeManagementUseCaseDataType data	  = payload.cmd[0].nodeManagementUseCaseData;
 
-				data.useCaseInformation[0].address.device								= connection.Local.Id;
-				data.useCaseInformation[0].address.entity								= [1];
-				data.useCaseInformation[0].actor										= "ControllableSystem";
-				data.useCaseInformation[0].useCaseSupport[0].useCaseName				= "limitationOfPowerConsumption";
-				data.useCaseInformation[0].useCaseSupport[0].useCaseVersion				= "1.0.0";
-				data.useCaseInformation[0].useCaseSupport[0].useCaseAvailable			= true;
-				data.useCaseInformation[0].useCaseSupport[0].scenarioSupport			= [1,2,3,4];
-				data.useCaseInformation[0].useCaseSupport[0].useCaseDocumentSubRevision = "release";
+				List<UseCaseInformationType> infos = new();
+
+				foreach ( Entity entity in connection.Local.Entities )
+					infos.AddRange( entity.UseCaseInformations );
+
+				data.useCaseInformation = infos.ToArray();
 
 				return payload;
 			}
@@ -64,7 +63,7 @@ namespace EEBUS.SPINE.Commands
 
 		public bool	  useCaseAvailable			 { get; set; }
 
-		public int[]  scenarioSupport			 { get; set; }
+		public uint[] scenarioSupport			 { get; set; }
 
 		public string useCaseDocumentSubRevision { get; set; }
 	}

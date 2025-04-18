@@ -1,4 +1,5 @@
 ﻿
+using EEBUS.DataStructures;
 using EEBUS.Messages;
 using EEBUS.SHIP.Messages;
 using Newtonsoft.Json;
@@ -26,14 +27,12 @@ namespace EEBUS.SPINE.Commands
 				{
 					LoadControlLimitListData	 payload = new LoadControlLimitListData();
 					LoadControlLimitListDataType data	 = payload.cmd[0].loadControlLimitListData;
-			
-					data.loadControlLimitData = [new()];
-					data.loadControlLimitData[0].limitId			= 0;
-					data.loadControlLimitData[0].isLimitChangeable  = true;
-					data.loadControlLimitData[0].isLimitActive		= true;
-					data.loadControlLimitData[0].timePeriod.endTime = "PT2H";
-					data.loadControlLimitData[0].value.number		= 4211;
-					data.loadControlLimitData[0].value.scale		= 0;
+
+					List<LoadControlLimitDataType> datas = new();
+					foreach ( LoadControlLimitDataStructure structure in connection.Local.GetDataStructures<LoadControlLimitDataStructure>() )
+						datas.Add( structure.Data );
+
+					data.loadControlLimitData = datas.ToArray();
 
 					return payload;
 				}
