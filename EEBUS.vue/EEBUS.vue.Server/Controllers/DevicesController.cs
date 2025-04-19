@@ -1,19 +1,19 @@
-using Microsoft.AspNetCore.Mvc;
-
-using EEBUS.vue.Server;
-using EEBUS.Models;
-using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
 using System.Diagnostics;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+
+using Microsoft.AspNetCore.Mvc;
+
+using Newtonsoft.Json.Linq;
+
+using EEBUS.Models;
 using EEBUS.SHIP.Messages;
 
 namespace EEBUS.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-//[Produces("application/json")]
 public class DevicesController : ControllerBase, IDisposable
 {
 	private readonly ILogger<DevicesController> logger;

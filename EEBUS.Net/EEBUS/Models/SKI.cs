@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-
-namespace EEBUS.Models
+﻿namespace EEBUS.Models
 {
 	public class SKI
 	{

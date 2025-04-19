@@ -1,9 +1,7 @@
-﻿using EEBUS.Messages;
-using System.Net.WebSockets;
-using System.Threading.Tasks;
-using System;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+
+using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {

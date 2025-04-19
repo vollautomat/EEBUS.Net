@@ -7,12 +7,8 @@ using System.Security.Cryptography.X509Certificates;
 
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 
-using EEBUS;
 using EEBUS.Models;
-using EEBUS.Controllers;
 
 namespace EEBUS.vue.Server
 {

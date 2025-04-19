@@ -1,9 +1,5 @@
-﻿using EEBUS.SHIP.Messages;
-using EEBUS.SPINE;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EEBUS.Messages
 {

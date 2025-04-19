@@ -1,9 +1,4 @@
-﻿using System.Net.Sockets;
-using System;
-using System.Net.WebSockets;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.DataProtection;
+﻿using System.Net.WebSockets;
 
 namespace EEBUS.EEBUS
 {

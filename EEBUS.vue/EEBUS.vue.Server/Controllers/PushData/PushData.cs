@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
 namespace EEBUS.Controllers
-
 {
 	public class PushData : JObject
 	{

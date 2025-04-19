@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-
-namespace EEBUS.Models
+﻿namespace EEBUS.Models
 {
 	public class RemoteDevice : Device
 	{

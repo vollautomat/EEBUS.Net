@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 
@@ -45,7 +42,10 @@ namespace EEBUS
 		{
 			var heart = new Heart();
 			var beat  = new System.Threading.Timer( heart.Beat, this, 4000, 4000 );
-			
+
+			var ecc		= new ElectricalConnectionCharacteristic();
+			var eccSend	= new System.Threading.Timer( ecc.SendData, this, 5000, Timeout.Infinite );
+
 			try
 			{
 				while ( this.ws.State == WebSocketState.Open )
@@ -92,6 +92,8 @@ namespace EEBUS
 			}
 
 			beat.Change( Timeout.Infinite, Timeout.Infinite );
+			eccSend.Change( Timeout.Infinite, Timeout.Infinite );
+
 			await Close().ConfigureAwait( false );
 		}
 

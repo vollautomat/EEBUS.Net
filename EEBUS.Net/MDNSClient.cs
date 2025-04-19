@@ -1,15 +1,8 @@
-﻿
-using EEBUS.Models;
+﻿using System.Net.Sockets;
+
 using Makaretu.Dns;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Linq;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
+
+using EEBUS.Models;
 
 namespace EEBUS
 {

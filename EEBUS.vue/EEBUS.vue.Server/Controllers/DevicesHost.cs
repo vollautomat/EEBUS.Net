@@ -1,5 +1,4 @@
-﻿
-using EEBUS.Models;
+﻿using EEBUS.Models;
 
 namespace EEBUS.Controllers
 {

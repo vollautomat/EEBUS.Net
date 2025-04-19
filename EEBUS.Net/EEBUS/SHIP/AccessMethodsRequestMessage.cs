@@ -1,9 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Net.WebSockets;
-
-using EEBUS.Messages;
-using System.Data;
+﻿using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages
 {

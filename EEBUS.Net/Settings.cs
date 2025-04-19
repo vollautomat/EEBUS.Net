@@ -1,11 +1,4 @@
-﻿using EEBUS.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EEBUS
+﻿namespace EEBUS
 {
 	public class Settings
 	{
@@ -36,7 +29,18 @@ namespace EEBUS
 
 	public class UseCaseSettings
 	{
-		public string Type  { get; set; }
-		public string Actor { get; set; }
+		public string		 Type		{ get; set; }
+		public string		 Actor		{ get; set; }
+		public LimitSettings InitLimits	{ get; set; }
+	}
+
+	public class LimitSettings
+	{
+		public bool	Active			 { get; set; }
+		public long	Limit			 { get; set; }
+		public uint	Duration		 { get; set; }
+		public long	FailsafeLimit	 { get; set; }
+		public uint	FailsafeDuration { get; set; }
+		public long NominalMax		 { get; set; }
 	}
 }

@@ -1,10 +1,6 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Net.WebSockets;
+﻿using Newtonsoft.Json;
 
 using EEBUS.Messages;
-using Newtonsoft.Json;
-using System.Data;
 
 namespace EEBUS.SHIP.Messages
 {

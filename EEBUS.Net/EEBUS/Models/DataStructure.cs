@@ -7,6 +7,7 @@
 			Type = type;
 		}
 
-		protected string Type { get; private set; }
+		protected string	Type { get; private set; }
+		public virtual uint Id  { get; set; }
 	}
 }

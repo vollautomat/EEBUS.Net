@@ -1,9 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace EEBUS.Models
+﻿namespace EEBUS.Models
 {
 	public class Device
 	{
@@ -54,6 +49,7 @@ namespace EEBUS.Models
 
 		public void Add( DataStructure dataStructure )
 		{
+			dataStructure.Id = (uint) this.DataStructures.Count;
 			this.DataStructures.Add( dataStructure );
 		}
 
@@ -66,6 +62,15 @@ namespace EEBUS.Models
 					datas.Add( data as T );
 
 			return datas;
+		}
+
+		public T GetDataStructure<T>( uint id ) where T : DataStructure
+		{
+			foreach ( var data in this.DataStructures )
+				if ( data is T && data.Id == id )
+					return data as T;
+
+			return null;
 		}
 
 		public void Add( KeyValue keyValue )

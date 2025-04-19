@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace EEBUS.Models
+﻿namespace EEBUS.Models
 {
 	public class Scenario
 	{

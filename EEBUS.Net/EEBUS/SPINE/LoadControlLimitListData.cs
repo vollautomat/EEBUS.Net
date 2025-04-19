@@ -1,14 +1,13 @@
 ﻿
+using System.Diagnostics;
+using System.Xml;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using EEBUS.DataStructures;
 using EEBUS.Messages;
 using EEBUS.SHIP.Messages;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Diagnostics;
-using System.Reflection.PortableExecutable;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace EEBUS.SPINE.Commands
 {
@@ -40,6 +39,12 @@ namespace EEBUS.SPINE.Commands
 				{
 					LoadControlLimitListData command  = datagram.payload.ToObject<LoadControlLimitListData>();
 					LoadControlLimitDataType received = command.cmd[0].loadControlLimitListData.loadControlLimitData[0];
+
+					LoadControlLimitDataStructure data = connection.Local.GetDataStructure<LoadControlLimitDataStructure>( received.limitId );
+
+					data.LimitActive = received.isLimitActive;
+					data.Number		 = received.value.number;
+					data.EndTime	 = received.timePeriod.endTime;
 
 					bool	 active	  = received.isLimitActive;
 					TimeSpan timeSpan = XmlConvert.ToTimeSpan( received.timePeriod.endTime );

@@ -1,13 +1,11 @@
-﻿using System;
-using System.Net.WebSockets;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Net.WebSockets;
+
+using Microsoft.AspNetCore.Http;
 
 using EEBUS.Enums;
 using EEBUS.Messages;
 using EEBUS.Models;
 using EEBUS.SHIP.Messages;
-using Microsoft.AspNetCore.Http;
 
 namespace EEBUS
 {
@@ -31,6 +29,9 @@ namespace EEBUS
 
 			var heart = new Heart();
 			var beat  = new System.Threading.Timer( heart.Beat, this, 4000, 4000 );
+
+			var ecc		= new ElectricalConnectionCharacteristic();
+			var eccSend = new System.Threading.Timer( ecc.SendData, this, 5000, Timeout.Infinite );
 
 			try
 			{
@@ -69,6 +70,7 @@ namespace EEBUS
 			finally
 			{
 				beat.Change( Timeout.Infinite, Timeout.Infinite );
+				eccSend.Change( Timeout.Infinite, Timeout.Infinite );
 
 				if ( null != this.remoteDevice )
 					this.remoteDevice.SetClientState( EState.Stopped );

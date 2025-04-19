@@ -1,32 +1,25 @@
 ﻿using EEBUS.Models;
 using EEBUS.SPINE.Commands;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EEBUS.DataStructures
 {
 	public class LoadControlLimitDataStructure : DataStructure
 	{
-		public LoadControlLimitDataStructure( uint limitId, string direction )
+		public LoadControlLimitDataStructure( string direction, long value, short scale, string duration, bool active )
 			: base( "LoadControlLimit" )
 		{
-			this.limitId		= limitId;
+			this.limitId		= 0;
 			this.limitType		= "signDependentAbsValueLimit";
 			this.limitCategory	= "obligation";
 			this.limitDirection	= direction;
 			this.measurementId	= 0;
 			this.scopeType		= "activePowerLimit";
 
-			this.limitChangable	= true;
-			this.limitActive	= false;
-			this.endTime		= "PT2H";
-			this.number			= 4200;
-			this.scale			= 0;
+			this.LimitChangable	= true;
+			this.LimitActive	= active;
+			this.EndTime		= duration;
+			this.Number			= value;
+			this.Scale			= scale;
 		}
 
 		private uint   limitId;
@@ -36,11 +29,23 @@ namespace EEBUS.DataStructures
 		private uint   measurementId;
 		private string scopeType;
 
-		private bool   limitChangable;
-		private bool   limitActive;
-		private string endTime;
-		private long   number;
-		private short  scale;
+		public bool	   LimitChangable { get; set; }
+		public bool	   LimitActive	  { get; set; }
+		public string  EndTime		  { get; set; }
+		public long	   Number		  { get; set; }
+		public short   Scale		  { get; set; }
+
+		public override uint Id
+		{
+			get
+			{
+				return this.limitId;
+			}
+			set
+			{
+				this.limitId = value;
+			}
+		}
 
 		public LoadControlLimitDescriptionDataType DescriptionData
 		{
@@ -66,11 +71,11 @@ namespace EEBUS.DataStructures
 				LoadControlLimitDataType data = new();
 
 				data.limitId			= this.limitId;
-				data.isLimitChangeable	= this.limitChangable;
-				data.isLimitActive		= this.limitActive;
-				data.timePeriod.endTime	= this.endTime;
-				data.value.number		= this.number;
-				data.value.scale		= this.scale;
+				data.isLimitChangeable	= this.LimitChangable;
+				data.isLimitActive		= this.LimitActive;
+				data.timePeriod.endTime	= this.EndTime;
+				data.value.number		= this.Number;
+				data.value.scale		= this.Scale;
 
 				return data;
 			}

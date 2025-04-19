@@ -3,9 +3,9 @@ using EEBUS.SPINE.Commands;
 
 namespace EEBUS.KeyValues
 {
-	public class FailsafeConsumptionActivePowerLimitKeyValue : KeyValue
+	public class FailsafeProductionActivePowerLimitKeyValue : KeyValue
 	{
-		public FailsafeConsumptionActivePowerLimitKeyValue( Device device, long value, short scale, bool changable )
+		public FailsafeProductionActivePowerLimitKeyValue( Device device, long value, short scale, bool changable )
 			: base( device )
 		{
 			this.value	   = value;
@@ -13,7 +13,7 @@ namespace EEBUS.KeyValues
 			this.changable = changable;
 		}
 
-		public override string KeyName { get { return "failsafeConsumptionActivePowerLimit"; } }
+		public override string KeyName { get { return "failsafeProductionActivePowerLimit"; } }
 		public override string Type	   { get { return "scaledNumber"; } }
 		public string		   Unit	   { get { return "W"; } }
 

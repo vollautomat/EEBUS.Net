@@ -1,14 +1,9 @@
-﻿using System;
-using System.Net.WebSockets;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 using Newtonsoft.Json.Converters;
 
-using EEBUS;
 using EEBUS.Enums;
 using EEBUS.Messages;
-using System.Data;
 
 namespace EEBUS.SHIP.Messages
 {

@@ -1,8 +1,8 @@
 ﻿
+using Newtonsoft.Json;
+
 using EEBUS.Messages;
 using EEBUS.Models;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
 
 namespace EEBUS.SPINE.Commands
 {

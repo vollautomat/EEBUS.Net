@@ -1,7 +1,4 @@
 ﻿using EEBUS.Enums;
-using Microsoft.AspNetCore.Hosting.Server;
-using Newtonsoft.Json;
-using System.Text;
 
 namespace EEBUS.Messages
 {

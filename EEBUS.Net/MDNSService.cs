@@ -1,15 +1,12 @@
-﻿
-using System;
-using System.Net;
+﻿using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 using Makaretu.Dns;
+
 using EEBUS.Models;
 
 namespace EEBUS

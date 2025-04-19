@@ -1,9 +1,4 @@
-﻿
-using EEBUS.Messages;
-using Newtonsoft.Json;
-using System;
-using System.Diagnostics.Metrics;
-using System.Threading.Tasks;
+﻿using EEBUS.Messages;
 
 namespace EEBUS.SPINE.Commands
 {
@@ -30,7 +25,7 @@ namespace EEBUS.SPINE.Commands
 				return payload;
 			}
 
-			public override SpineCmdPayloadBase CreateNotify( DatagramType datagram )
+			public override SpineCmdPayloadBase CreateNotify()
 			{
 				DeviceDiagnosisHeartbeatData	 payload = new DeviceDiagnosisHeartbeatData();
 				DeviceDiagnosisHeartbeatDataType data	 = payload.cmd[0].deviceDiagnosisHeartbeatData;

@@ -1,10 +1,4 @@
-﻿using EEBUS.SHIP.Messages;
-using Makaretu.Dns;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace EEBUS.Messages
+﻿namespace EEBUS.Messages
 {
 	public class SpineCmdPayloadBase
 	{
@@ -19,7 +13,7 @@ namespace EEBUS.Messages
 				return null;
 			}
 
-			public virtual SpineCmdPayloadBase CreateNotify( DatagramType datagram )
+			public virtual SpineCmdPayloadBase CreateNotify()
 			{
 				return null;
 			}

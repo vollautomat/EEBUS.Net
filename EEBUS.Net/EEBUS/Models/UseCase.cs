@@ -1,5 +1,4 @@
-﻿using EEBUS.Messages;
-using EEBUS.SPINE.Commands;
+﻿using EEBUS.SPINE.Commands;
 
 namespace EEBUS.Models
 {

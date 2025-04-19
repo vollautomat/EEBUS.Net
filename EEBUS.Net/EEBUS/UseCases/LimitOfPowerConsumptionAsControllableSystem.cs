@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Xml;
+
 using EEBUS.DataStructures;
 using EEBUS.KeyValues;
 using EEBUS.Models;
 using EEBUS.SPINE.Commands;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EEBUS.UseCases
 {
@@ -26,10 +22,28 @@ namespace EEBUS.UseCases
 			this.Scenarios.Add( new Scenario( 3, true, "Heartbeat" ) );
 			this.Scenarios.Add( new Scenario( 4, true, "Constraints" ) );
 
-			entity.Local.Add( new LoadControlLimitDataStructure( 0, "consume" ) );
+			bool active			  = false;
+			long limit			  = 0;
+			uint duration		  = 0;
+			long failsafeLimit	  = 4200;
+			uint failsafeDuration = 7200;
 
-			entity.Local.AddUnique( new FailsafeConsumptionActivePowerLimitKeyValue( entity.Local, 3600, 0, true ) );
-			entity.Local.AddUnique( new FailsafeDurationMinimumKeyValue(			 entity.Local, "PT2H", true) );
+			if ( null != usecaseSettings.InitLimits )
+			{
+				active			 = usecaseSettings.InitLimits.Active;
+				limit			 = usecaseSettings.InitLimits.Limit;
+				duration		 = usecaseSettings.InitLimits.Duration;
+				failsafeLimit	 = usecaseSettings.InitLimits.FailsafeLimit;
+				failsafeDuration = usecaseSettings.InitLimits.FailsafeDuration;
+			}
+
+			string xmlDuration		   = XmlConvert.ToString( TimeSpan.FromSeconds( duration ) );
+			string xmlFailsafeDuration = XmlConvert.ToString( TimeSpan.FromSeconds( failsafeDuration ) );
+
+			entity.Local.Add( new LoadControlLimitDataStructure( "consume", limit, 0, xmlDuration, active ) );
+
+			entity.Local.AddUnique( new FailsafeConsumptionActivePowerLimitKeyValue( entity.Local, failsafeLimit, 0, true ) );
+			entity.Local.AddUnique( new FailsafeDurationMinimumKeyValue(			 entity.Local, xmlFailsafeDuration, true ) );
 		}
 
 		public new class Class : UseCase.Class

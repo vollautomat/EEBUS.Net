@@ -1,10 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Net;
-using System.Net.WebSockets;
-using System.Threading.Tasks;
-
-using EEBUS.Enums;
+﻿using EEBUS.Enums;
 using EEBUS.Messages;
 
 namespace EEBUS.SHIP.Messages

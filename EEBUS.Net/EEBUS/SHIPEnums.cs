@@ -1,8 +1,4 @@
-﻿
-using Newtonsoft.Json;
-using System.Text;
-
-namespace EEBUS.Enums
+﻿namespace EEBUS.Enums
 {
     public class SHIPMessageType
     {

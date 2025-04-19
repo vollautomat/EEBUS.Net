@@ -1,9 +1,4 @@
-﻿using EEBUS.SHIP.Messages;
-using Makaretu.Dns;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-
-namespace EEBUS.Messages
+﻿namespace EEBUS.Messages
 {
 	public class SpineCmdPayload<T> : SpineCmdPayloadBase where T: CmdType, new()
 	{
