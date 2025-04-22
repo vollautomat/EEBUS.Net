@@ -1,11 +1,16 @@
-﻿namespace EEBUS.Models
+﻿using EEBUS.SPINE.Commands;
+using Newtonsoft.Json.Linq;
+
+namespace EEBUS.Models
 {
 	public class RemoteDevice : Device
 	{
-		public RemoteDevice( string id, string ski, string url, StateChangedHandler serverStateChanged, StateChangedHandler clientStateChanged )
-			: base( id, ski )
+		public RemoteDevice( string id, string ski, string url, string name, StateChangedHandler serverStateChanged, StateChangedHandler clientStateChanged )
+			: base( "?", ski )
 		{
-			this.Url = url;
+			this.Id   = id;
+			this.Url  = url;
+			this.Name = name;
 
 			this.serverStateChanged = serverStateChanged;
 			this.clientStateChanged = clientStateChanged;
@@ -15,9 +20,10 @@
 		private StateChangedHandler	serverStateChanged;
 		private StateChangedHandler	clientStateChanged;
 
-		public Connection.EState	serverState = Connection.EState.Unconnected;
-		public Connection.EState	clientState = Connection.EState.Unconnected;
+		public Connection.EState	serverState = Connection.EState.Disconnected;
+		public Connection.EState	clientState = Connection.EState.Disconnected;
 
+		public string				Id  { get; private set; }
 		public string				Url { get; private set; }
 		private DateTime			Age = DateTime.UtcNow;
 

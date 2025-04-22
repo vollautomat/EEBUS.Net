@@ -1,4 +1,5 @@
 ﻿using EEBUS.SPINE.Commands;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace EEBUS.Models
 {
@@ -16,15 +17,47 @@ namespace EEBUS.Models
 			}
 		}
 
+		public Entity( int index, LocalDevice local, EntityInformationType entityInfo, FeatureInformationType[] featureInfos )
+		{
+			this.index = index;
+			this.local = local;
+			this.Type  = entityInfo.description.entityType;
+
+			foreach ( FeatureInformationType featureInfo in featureInfos )
+			{
+				if ( EqualIndex( featureInfo.description.featureAddress.entity ) )
+				{
+					this.Features.Add( Feature.Create( featureInfo, this ) );
+				}
+			}
+		}
+
 		public abstract class Class
 		{
 			public abstract Entity Create( int index, LocalDevice local, EntitySettings entitySettings );
+
+			public abstract Entity Create( int index, LocalDevice local, EntityInformationType entityInfo, FeatureInformationType[] featureInfos );
 		}
 
 		static public Entity Create( int index, LocalDevice local, EntitySettings entitySettings )
 		{
 			if ( entityClasses.TryGetValue( entitySettings.Type, out Class cls ) )
 				return cls.Create( index, local, entitySettings );
+
+			return null;
+		}
+
+		static public Entity Create( LocalDevice local, EntityInformationType entityInfo, FeatureInformationType[] featureInfos )
+		{
+			// Missing: if (1 < Index.Length) => this is a child of another entity. Look for it and set it as owner
+
+			int[] Index = entityInfo.description.entityAddress.entity;
+			int   index = Index[Index.Length - 1];
+
+			string type = entityInfo.description.entityType;
+
+			if ( entityClasses.TryGetValue( type, out Class cls ) )
+				return cls.Create( index, local, entityInfo, featureInfos );
 
 			return null;
 		}
@@ -65,6 +98,18 @@ namespace EEBUS.Models
 			}
 		}
 
+		public bool EqualIndex( int[] otherIndex )
+		{
+			if ( this.Index.Length != otherIndex.Length )
+				return false;
+
+			for ( int i = 0; i < this.Index.Length; i++ )
+				if ( this.Index[i] != otherIndex[i] )
+					return false;
+
+			return true;
+		}
+
 		public LocalDevice Local
 		{
 			get
@@ -88,7 +133,7 @@ namespace EEBUS.Models
 				{
 					UseCaseInformationType info = new();
 
-					info.address.device	= this.Local.Id;
+					info.address.device	= this.Local.DeviceId;
 					info.address.entity	= this.Index;
 					info.actor			= actor;
 
@@ -105,6 +150,11 @@ namespace EEBUS.Models
 
 				return infos;
 			}
+		}
+
+		public bool HasUseCase( Type usecaseType )
+		{
+			return this.UseCases.Any( uc => uc.GetType() == usecaseType );
 		}
 	}
 }

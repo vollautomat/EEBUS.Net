@@ -28,7 +28,7 @@ namespace EEBUS.Messages
 			}
 		}
 
-		public async Task<SpineDatagramPayload> CreateAnswer( ulong counter, Connection connection )
+		private SpineCmdPayloadBase.Class GetClass()
 		{
 			if ( ! this.datagram.payload.TryGetValue( "cmd", out JToken cmds ) )
 				return null;
@@ -51,22 +51,40 @@ namespace EEBUS.Messages
 			if ( null == cls )
 				return null;
 
+			return cls;
+		}
+
+		public SpineDatagramPayload CreateAnswer( ulong counter, Connection connection )
+		{
+			SpineCmdPayloadBase.Class cls = GetClass();
+			if ( null == cls )
+				return null;
+
 			SpineDatagramPayload reply = new SpineDatagramPayload();
 			reply.datagram.header.addressSource		   = this.datagram.header.addressDestination;
-			reply.datagram.header.addressSource.device = connection.Local.Id;
+			reply.datagram.header.addressSource.device = connection.Local.DeviceId;
 			reply.datagram.header.addressDestination   = this.datagram.header.addressSource;
 			reply.datagram.header.msgCounter		   = counter;
 			reply.datagram.header.msgCounterReference  = this.datagram.header.msgCounter;
 			reply.datagram.header.cmdClassifier		   = GetAnswerCmdClassifier();
 			reply.datagram.header.ackRequest		   = cls.GetAnswerAckRequest();
 
-			SpineCmdPayloadBase payload = await cls.CreateAnswer( this.datagram, reply.datagram.header, connection );
+			SpineCmdPayloadBase payload = cls.CreateAnswer( this.datagram, reply.datagram.header, connection );
 			if ( null == payload )
 				return null;
 
 			reply.datagram.payload = JObject.FromObject( payload );
 
 			return reply;
+		}
+
+		public void Evaluate( Connection connection )
+		{
+			SpineCmdPayloadBase.Class cls = GetClass();
+			if ( null == cls )
+				return;
+
+			cls.Evaluate( connection, this.datagram );
 		}
 	}
 
@@ -101,6 +119,7 @@ namespace EEBUS.Messages
 	[System.SerializableAttribute()]
 	public class AddressType
 	{
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public string device  { get; set; }
 
 		public int[]  entity  { get; set; }

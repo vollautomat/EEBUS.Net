@@ -18,24 +18,25 @@ namespace EEBUS
 		public Server( HostString host, WebSocket ws, Devices devices )
 			: base( host, ws, devices )
 		{
-			serverMap[host] = this;
+			lock (mutex)
+			{
+				serverMap[host] = this;
+			}
 		}
 
 		static private ConcurrentDictionary<HostString, Server> serverMap = new();
 
-		private RemoteDevice remoteDevice = null;
-
-		//static private object mutex = new();
+		static private object mutex = new();
 		
 		static public Server Get( HostString host )
 		{
-			//lock ( mutex )
-			//{
+			lock ( mutex )
+			{
 				if ( ! serverMap.TryGetValue( host, out Server server ) )
 					return null;
 
 				return server;
-			//}
+			}
 		}
 
 		public async Task Do()
@@ -71,13 +72,17 @@ namespace EEBUS
 					if ( error != null )
 						Console.WriteLine( error );
 
+					EState oldState = this.state;
 					(this.state, this.subState) = await message.NextServerState( this ).ConfigureAwait( false );
 
-					if ( null == this.remoteDevice )
-						this.remoteDevice = GetRemote( message.GetDeviceId() );
+					if ( null == this.Remote )
+						this.Remote = GetRemote( message.GetId() );
 
-					if ( null != this.remoteDevice )
-						this.remoteDevice.SetServerState( this.state );
+					if ( null != this.Remote )
+						this.Remote.SetServerState( this.state );
+
+					if ( this.state == EState.Connected && this.state != oldState )
+						RequestRemoteDeviceConfiguration();
 
 					if ( this.state == EState.Stopped )
 						throw new Exception( "Communication stopped!" );
@@ -85,8 +90,8 @@ namespace EEBUS
 			}
 			catch ( Exception ex )
 			{
-				if ( null != this.remoteDevice )
-					this.remoteDevice.SetServerState( EState.Stopped );
+				if ( null != this.Remote )
+					this.Remote.SetServerState( EState.Stopped );
 
 				Debug.WriteLine( "Exception: " + ex.Message );
 			}

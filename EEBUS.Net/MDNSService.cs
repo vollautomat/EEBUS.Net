@@ -62,7 +62,7 @@ namespace EEBUS
 
 				// configure our EEBUS mDNS properties
 				AddProperty( "name",     localDevice.Name );
-				AddProperty( "id",       localDevice.Id );
+				AddProperty( "id",       localDevice.DeviceId );
 				AddProperty( "path",     "/ship/" );
 				AddProperty( "register", "true" );
 				AddProperty( "ski",      localDevice.SKI.ToString() );

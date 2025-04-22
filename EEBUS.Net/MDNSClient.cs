@@ -90,9 +90,7 @@ namespace EEBUS
 									if ( ! string.IsNullOrEmpty( id ) && ! string.IsNullOrEmpty( path ) )
 									{
 										string url = serverAddress.Address.ToString() + ":" + server.Port.ToString() + path;
-										RemoteDevice device = this.devices.GetOrCreateRemote( id, ski, url );
-										if ( null != device )
-											device.Name = ev.ServiceInstanceName.ToString();
+										RemoteDevice device = this.devices.GetOrCreateRemote( id, ski, url, ev.ServiceInstanceName.ToString() );
 									}
 								}
 							}

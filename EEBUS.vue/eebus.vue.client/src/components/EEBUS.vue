@@ -22,6 +22,26 @@
 
 		<hr />
 
+		<div class="limit-data">
+			<p></p><p>LPC</p><p>LPP</p>
+			<p>Active</p><p>{{local?.lpcActive}}</p><p>{{local?.lppActive}}</p>
+			<p>Limit</p><p>{{local?.lpcLimit}} W</p><p>{{local?.lppLimit}} W</p>
+			<p>Duration</p><p>{{local?.lpcDuration}} s</p><p>{{local?.lppDuration}} s</p>
+			<p>Failsafe Limit</p><p>{{local?.lpcFailsafeLimit}} W</p><p>{{local?.lppFailsafeLimit}} W</p>
+		</div>
+		<hr />
+		<div class="limit-data">
+			<p></p><p>LPC and LPP</p><p></p>
+			<p>Failsafe Duration</p><p>{{local?.failsafeDuration}} s</p><p></p>
+			<p>Received Heartbeat</p>
+			<p class="heartbeat-container">
+				<span v-bind:class = "(local?.heartbeat)?'pulse heartbeat':'pulse'">&#9673;</span>
+				<span>{{ local?.heartbeatTimeout ? ('(' + local.heartbeatTimeout + ' s)'): ''}}</span>
+			</p><p></p>
+		</div>
+
+		<hr />
+
 		<div v-for="remote in remotes">
 			<br />
 			<div class="table2c">
@@ -54,8 +74,22 @@
 	}
 
 	interface LocalDevice extends Device {
-		url:	string;
-		shipId:	string;
+		url:			  string;
+		shipId:			  string;
+
+		lpcActive:		  boolean;
+		lpcLimit:		  number;
+		lpcDuration:	  number;
+		lpcFailsafeLimit: number;
+
+		lppActive:		  boolean;
+		lppLimit:		  number;
+		lppDuration:	  number;
+		lppFailsafeLimit: number;
+
+		failsafeDuration: number;
+		heartbeat:		  boolean;
+		heartbeatTimeout: number;
 	}
 
 	interface PushData {
@@ -75,7 +109,7 @@
 		private timerId: any;
 
 		public local:	LocalDevice | undefined	= undefined;
-		public remotes:	Device[]				= [];
+		public remotes: Device[] = [];
 
 		@Watch('$route')
 		routeWatcher( newVal: any, oldVal: any ) {
@@ -185,15 +219,51 @@
 		}
 
 		public serverStateChanged( data: any ) {
-			var device = this.remotes.find( rd => rd.id == data.id );
+			var device = this.remotes.find( rd => rd.id == data.id || rd.ski == data.ski );
 			if ( device )
 				device.serverState = data.state;
 		}
 
 		public clientStateChanged( data: any ) {
-			var device = this.remotes.find( rd => rd.id == data.id );
+			var device = this.remotes.find( rd => rd.id == data.id || rd.ski == data.ski );
 			if ( device )
 				device.clientState = data.state;
+		}
+
+		public limitDataChanged( data: any ) {
+			if ( data.direction == "consume" && this.local ) {
+				this.local.lpcActive	= data.active;
+				this.local.lpcLimit	= data.limit;
+				this.local.lpcDuration	= data.duration;
+			}
+			else if ( data.direction == "produce" && this.local ) {
+				this.local.lppActive	= data.active;
+				this.local.lppLimit	= data.limit;
+				this.local.lppDuration	= data.duration;
+			}
+		}
+
+		public failsafeLimitDataChanged( data: any ) {
+			if ( data.direction == "consume" && this.local ) {
+				this.local.lpcFailsafeLimit = data.limit;
+			}
+			else if ( data.direction == "produce" && this.local ) {
+				this.local.lppFailsafeLimit = data.limit;
+			}
+		}
+
+		public failsafeLimitDurationChanged(data: any) {
+			if ( this.local )
+				this.local.failsafeDuration = data.duration;
+		}
+
+		public heartbeatReceived( data: any ) {
+			if ( this.local ) {
+				this.local.heartbeat		= true;
+				this.local.heartbeatTimeout	= data.timeout;
+
+				setTimeout( () => this.local.heartbeat = false, 1000 );
+			}
 		}
 	}
 
@@ -202,31 +272,77 @@
 
 <style scoped>
 	.header-frame {
-	display: inline-table;
-	margin-bottom: 10px;
+		display: inline-table;
+		margin-bottom: 10px;
 	}
 
 	.header {
-	display: grid;
-	grid-template-columns: 200fr 25fr;
-	column-gap: 25px;
+		display: grid;
+		grid-template-columns: 200fr 25fr;
+		column-gap: 25px;
 	}
 
 	.qrcode-text {
-	width: 370px;
-	text-align: left;
-	word-break: break-all;
+		width: 370px;
+		text-align: left;
+		word-break: break-all;
 	}
 
 	.qrcode {
-	width: 130px;
-	height: 100%;
+		width: 130px;
+		height: 100%;
 	}
 
 	.table2c {
-	display: grid;
-	grid-template-columns: 100px 1fr;
-	column-gap: 5px;
+		display: grid;
+		grid-template-columns: 100px 1fr;
+		column-gap: 5px;
+	}
+
+	.limit-data {
+		display: grid;
+		grid-template-columns: 50fr 25fr 25fr;
+		column-gap: 10px;
+	}
+
+	.pulse {
+		font-size: 25px;
+		line-height: 1;
+		position: relative;
+		top: -2px;
+	}
+
+	.heartbeat-container {
+		display: grid;
+		grid-template-columns: 30px 50px;
+	}
+
+	.heartbeat {
+		animation-name: heartbeat;
+		animation-duration: 1s;
+		/* animation-iteration-count: infinite; */
+	}
+
+	@keyframes heartbeat {
+		from {
+			color: rgb(0,255,0);
+		}
+
+		25% {
+			color: rgb(0,255,0);
+		}
+
+		50% {
+			color: rgb(0,127,0);
+		}
+
+		75% {
+			color: rgb(0,63,0);
+		}
+
+		to {
+			color: rgb(0,0,0);
+		}
 	}
 
 </style>

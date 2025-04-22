@@ -9,7 +9,7 @@ using EEBUS.Messages;
 using EEBUS.Models;
 using EEBUS.SHIP.Messages;
 using EEBUS.SPINE.Commands;
-using AddressType = EEBUS.Messages.AddressType;
+
 
 namespace EEBUS
 {
@@ -20,12 +20,9 @@ namespace EEBUS
 		protected EState	 state;
 		protected ESubState	 subState;
 
-		private AddressType  heartbeatSource;
-		private AddressType  heartbeatDestination;
-
 		public enum EState
 		{
-			Unconnected,
+			Disconnected,
 			WaitingForConnectionHello,
 			WaitingForProtocolHandshake,
 			SendProtocolHandshakeError,
@@ -50,31 +47,52 @@ namespace EEBUS
 
 		protected class Heart
 		{
+			private bool heartbeatSubscribed = false;
+
 			// This method is called by the timer delegate.
-			public async void Beat( object connectionObj )
+			public void Beat( object connectionObj )
 			{
 				Connection connection = (Connection) connectionObj;
 				
 				if ( connection.State == Connection.EState.Connected )
 				{
-					if ( connection is Server )
-						Debug.WriteLine( "--- Send heartbeat via server ---" );
-					else
-						Debug.WriteLine( "--- Send heartbeat via client ---" );
+					AddressType source		= connection.Local.GetHeartbeatAddress( true );
+					AddressType destination	= connection.Remote.GetHeartbeatAddress( false );
 
-					SpineDatagramPayload reply = new SpineDatagramPayload();
-					reply.datagram.header.addressSource		 = connection.heartbeatSource;
-					reply.datagram.header.addressDestination = connection.heartbeatDestination;
-					reply.datagram.header.msgCounter		 = DataMessage.NextCount;
-					reply.datagram.header.cmdClassifier		 = "notify";
+					if ( null != source && null != destination )
+					{
+						if ( ! this.heartbeatSubscribed )
+						{
+							this.heartbeatSubscribed = true;
 
-					DeviceDiagnosisHeartbeatData heartbeat = new DeviceDiagnosisHeartbeatData();
-					reply.datagram.payload = JObject.FromObject( heartbeat );
+							if ( connection is Server )
+								Debug.WriteLine( "--- Request heartbeat via server ---" );
+							else
+								Debug.WriteLine( "--- Request heartbeat via client ---" );
+
+							connection.HeartbeatSubscription();
+							connection.HeartbeatRead();
+						}
+
+						if ( connection is Server )
+							Debug.WriteLine( "--- Send heartbeat via server ---" );
+						else
+							Debug.WriteLine( "--- Send heartbeat via client ---" );
+
+						SpineDatagramPayload reply = new SpineDatagramPayload();
+						reply.datagram.header.addressSource		 = source;
+						reply.datagram.header.addressDestination = destination;
+						reply.datagram.header.msgCounter		 = DataMessage.NextCount;
+						reply.datagram.header.cmdClassifier		 = "notify";
+
+						SpineCmdPayloadBase heartbeat = new DeviceDiagnosisHeartbeatData.Class().CreateNotify( connection );
+						reply.datagram.payload = JObject.FromObject( heartbeat );
 					
-					DataMessage heartbeatMessage = new DataMessage();
-					heartbeatMessage.SetPayload( JObject.FromObject( reply ) );
+						DataMessage heartbeatMessage = new DataMessage();
+						heartbeatMessage.SetPayload( JObject.FromObject( reply ) );
 
-					await heartbeatMessage.Send( connection.ws ).ConfigureAwait( false );
+						connection.PushDataMessage( heartbeatMessage );
+					}
 				}
 			}
 		}
@@ -82,62 +100,64 @@ namespace EEBUS
 		protected class ElectricalConnectionCharacteristic
 		{
 			// This method is called by the timer delegate.
-			public async void SendData( object connectionObj )
+			public void SendData( object connectionObj )
 			{
 				Connection connection = (Connection) connectionObj;
 				
 				if ( connection.State == Connection.EState.Connected )
 				{
-					if ( connection is Server )
-						Debug.WriteLine( "--- Send electrical connection characteristics via server ---" );
-					else
-						Debug.WriteLine( "--- Send electrical connection characteristics via client ---" );
+					AddressType source		= connection.Local.GetElectricalConnectionAddress( true );
+					AddressType destination	= connection.Remote.GetElectricalConnectionAddress( false );
 
-					SpineDatagramPayload reply = new SpineDatagramPayload();
-					reply.datagram.header.addressSource				 = new();
-					reply.datagram.header.addressSource.device		 = connection.Local.Id;
-					reply.datagram.header.addressSource.entity		 = [1];
-					reply.datagram.header.addressSource.feature		 = 5;
-					reply.datagram.header.addressDestination		 = new();
-					reply.datagram.header.addressDestination.device	 = connection.heartbeatDestination.device;
-					reply.datagram.header.addressDestination.entity	 = [1];
-					reply.datagram.header.addressDestination.feature = 4;
-					reply.datagram.header.msgCounter				 = DataMessage.NextCount;
-					reply.datagram.header.cmdClassifier				 = "notify";
+					if ( null != source && null != destination )
+					{
+						if ( connection is Server )
+							Debug.WriteLine( "--- Send electrical connection characteristics via server ---" );
+						else
+							Debug.WriteLine( "--- Send electrical connection characteristics via client ---" );
 
-					reply.datagram.payload = JObject.FromObject( new ElectricalConnectionCharacteristicListData.Class().CreateNotify() );
+						SpineDatagramPayload reply = new SpineDatagramPayload();
+						reply.datagram.header.addressSource		 = source;
+						reply.datagram.header.addressDestination = destination;
+						reply.datagram.header.msgCounter		 = DataMessage.NextCount;
+						reply.datagram.header.cmdClassifier		 = "notify";
 
-					DataMessage eccMessage = new DataMessage();
-					eccMessage.SetPayload( JObject.FromObject( reply ) );
+						reply.datagram.payload = JObject.FromObject( new ElectricalConnectionCharacteristicListData.Class().CreateNotify( connection ) );
 
-					await eccMessage.Send( connection.ws ).ConfigureAwait( false );
+						DataMessage eccMessage = new DataMessage();
+						eccMessage.SetPayload( JObject.FromObject( reply ) );
+
+						connection.PushDataMessage( eccMessage );
+					}
 				}
 			}
 		}
 
 		public Connection( HostString host, WebSocket ws, Devices devices )
 		{
-			this.host	 = host;
-			this.ws		 = ws;
-			this.devices = devices;
+			this.host			 = host;
+			this.ws				 = ws;
+			this.devices		 = devices;
+
+			this.WaitingMessages = new( this );
 		}
 
-		public WebSocket   WebSocket { get { return this.ws; } }
+		public WebSocket    WebSocket { get { return this.ws; } }
 
-		public EState	   State	 { get { return this.state; } }
+		public EState	    State	  { get { return this.state; } }
 
-		public ESubState   SubState	 { get { return this.subState; } }
+		public ESubState    SubState  { get { return this.subState; } }
 
 
-		private Devices	   devices;
+		private Devices	    devices;
 
-		public LocalDevice Local
-		{
-			get
-			{
-				return this.devices.Local;
-			}
-		}
+		public LocalDevice  Local	  { get { return this.devices.Local; } }
+
+		public RemoteDevice Remote	  { get; protected set; }
+
+
+		public DataMessageQueue WaitingMessages { get; protected set; }
+
 
 		protected RemoteDevice GetRemote( string id )
 		{
@@ -147,10 +167,77 @@ namespace EEBUS
 			return this.devices.GetRemote( id );
 		}
 
-		public void SetHeartbeatAddresses( AddressType source, AddressType destination )
+		public void PushDataMessage( DataMessage message )
 		{
-			this.heartbeatSource	  = source;
-			this.heartbeatDestination = destination;
+			this.WaitingMessages.Push( message );
+		}
+
+		public void RequestRemoteDeviceConfiguration()
+		{
+			SpineDatagramPayload read = new SpineDatagramPayload();
+			read.datagram.header.addressSource				= new();
+			read.datagram.header.addressSource.device		= this.Local.DeviceId;
+			read.datagram.header.addressSource.entity		= [0];
+			read.datagram.header.addressSource.feature		= 0;
+			read.datagram.header.addressDestination			= new();
+			read.datagram.header.addressDestination.entity	= [0];
+			read.datagram.header.addressDestination.feature	= 0;
+			read.datagram.header.msgCounter					= DataMessage.NextCount;
+			read.datagram.header.cmdClassifier				= "read";
+
+			read.datagram.payload = JObject.FromObject( new NodeManagementDetailedDiscoveryData.Class().CreateRead( this ) );
+
+			DataMessage message = new DataMessage();
+			message.SetPayload( JObject.FromObject( read ) );
+
+			PushDataMessage( message );
+		}
+
+		public void HeartbeatSubscription()
+		{
+			SpineDatagramPayload call = new SpineDatagramPayload();
+			call.datagram.header.addressSource				= new();
+			call.datagram.header.addressSource.device		= this.Local.DeviceId;
+			call.datagram.header.addressSource.entity		= [0];
+			call.datagram.header.addressSource.feature		= 0;
+			call.datagram.header.addressDestination			= new();
+			call.datagram.header.addressDestination.device	= this.Remote.DeviceId;
+			call.datagram.header.addressDestination.entity	= [0];
+			call.datagram.header.addressDestination.feature	= 0;
+			call.datagram.header.msgCounter					= DataMessage.NextCount;
+			call.datagram.header.cmdClassifier				= "call";
+
+			NodeManagementSubscriptionRequestCall payload = new NodeManagementSubscriptionRequestCall();
+			SubscriptionRequestType subscriptionRequest = payload.cmd[0].nodeManagementSubscriptionRequestCall.subscriptionRequest;
+			subscriptionRequest.clientAddress	  = this.Local.GetHeartbeatAddress( false );
+			subscriptionRequest.serverAddress	  = this.Remote.GetHeartbeatAddress( true );
+			subscriptionRequest.serverFeatureType = "DeviceDiagnosis";
+
+			call.datagram.payload = JObject.FromObject( payload );
+
+			DataMessage message = new DataMessage();
+			message.SetPayload( JObject.FromObject( call ) );
+
+			PushDataMessage( message );
+		}
+
+		public void HeartbeatRead()
+		{
+			AddressType source		= this.Local.GetHeartbeatAddress( false );
+			AddressType destination = this.Remote.GetHeartbeatAddress( true );
+
+			SpineDatagramPayload read = new SpineDatagramPayload();
+			read.datagram.header.addressSource		= source;
+			read.datagram.header.addressDestination	= destination;
+			read.datagram.header.msgCounter			= DataMessage.NextCount;
+			read.datagram.header.cmdClassifier		= "read";
+
+			read.datagram.payload = JObject.FromObject( new DeviceDiagnosisHeartbeatData.Class().CreateRead( this ) );
+
+			DataMessage message = new DataMessage();
+			message.SetPayload( JObject.FromObject( read ) );
+
+			PushDataMessage( message );
 		}
 	}
 }

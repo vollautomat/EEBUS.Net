@@ -1,4 +1,5 @@
 ﻿using EEBUS.Models;
+using EEBUS.SPINE.Commands;
 
 namespace EEBUS.Features
 {
@@ -14,11 +15,21 @@ namespace EEBUS.Features
 		{
 		}
 
+		public DeviceDiagnosisClientFeature( int index, Entity owner, FeatureInformationType featureInfo )
+			: base( index, "DeviceDiagnosis", "client", owner, featureInfo )
+		{
+		}
+
 		public new class Class : Feature.Class
 		{
 			public override Feature Create( int index, Entity owner )
 			{
 				return new DeviceDiagnosisClientFeature( index, owner );
+			}
+
+			public override Feature Create( int index, Entity owner, FeatureInformationType featureInfo )
+			{
+				return new DeviceDiagnosisClientFeature( index, owner, featureInfo  );
 			}
 		}
 

@@ -14,14 +14,12 @@ namespace EEBUS
 		public Client( HostString host, WebSocket ws, Devices devices, RemoteDevice remoteDevice )
 			: base( host, ws, devices )
 		{
-			this.remoteDevice = remoteDevice;
+			this.Remote = remoteDevice;
 		}
-
-		private RemoteDevice remoteDevice;
 
 		public async Task<bool> Run()
 		{
-			this.state	  = EState.Unconnected;
+			this.state	  = EState.Disconnected;
 			this.subState = ESubState.None;
 
 			InitMessage initMessage = new InitMessage();
@@ -40,12 +38,12 @@ namespace EEBUS
 					byte[] receiveBuffer = new byte[10240];
 					WebSocketReceiveResult result = await this.ws.ReceiveAsync( receiveBuffer, new CancellationTokenSource( SHIPMessageTimeout.CMI_TIMEOUT ).Token ).ConfigureAwait( false );
 
-					if ( result.CloseStatus.HasValue )						
+					if ( result.CloseStatus.HasValue )
 						break; // close received
 					else if ( result.Count < 2 )
 						throw new Exception( "Invalid EEBUS payload received, expected message size of at least 2!" );
 
-					ShipMessageBase message = ShipMessageBase.Create( receiveBuffer, this );					
+					ShipMessageBase message = ShipMessageBase.Create( receiveBuffer, this );
 					if ( message == null )
 						throw new Exception( "Message couldn't be recognized" );
 
@@ -56,15 +54,14 @@ namespace EEBUS
 					if ( error != null )
 						Console.WriteLine( error );
 
+					EState oldState = this.state;
 					(this.state, this.subState) = await message.NextClientState( this ).ConfigureAwait( false );
 
-					if ( null != this.remoteDevice )
-						this.remoteDevice.SetClientState( this.state );
+					if ( null != this.Remote )
+						this.Remote.SetClientState( this.state );
 
-					//if ( this.state == State.Stopped )
-					//	throw new Exception( "Communication stopped!" );
-					//else if ( this.state == State.Connected )
-					//	break;
+					if ( this.state == EState.Connected && this.state != oldState )
+						RequestRemoteDeviceConfiguration();
 				}
 			}
 			finally
@@ -72,8 +69,8 @@ namespace EEBUS
 				beat.Change( Timeout.Infinite, Timeout.Infinite );
 				eccSend.Change( Timeout.Infinite, Timeout.Infinite );
 
-				if ( null != this.remoteDevice )
-					this.remoteDevice.SetClientState( EState.Stopped );
+				if ( null != this.Remote )
+					this.Remote.SetClientState( EState.Stopped );
 			}
 
 			return true;

@@ -1,5 +1,8 @@
 ﻿using EEBUS.Models;
 using EEBUS.SPINE.Commands;
+using EEBUS.UseCases.ControllableSystem;
+using System.Xml;
+using ValueType = EEBUS.SPINE.Commands.ValueType;
 
 namespace EEBUS.KeyValues
 {
@@ -8,14 +11,14 @@ namespace EEBUS.KeyValues
 		public FailsafeDurationMinimumKeyValue( Device device, string duration, bool changable )
 			: base( device )
 		{
-			this.duration  = duration;
+			this.Duration  = duration;
 			this.changable = changable;
 		}
 
-		public override string KeyName { get { return "failsafeDurationMinimum"; } }
-		public override string Type	   { get { return "duration"; } }
+		public override string KeyName	{ get { return "failsafeDurationMinimum"; } }
+		public override string Type		{ get { return "duration"; } }
 
-		private string		   duration;
+		public string		   Duration	{ get; set; }
 		private bool		   changable;
 		public override DeviceConfigurationKeyValueDescriptionDataType DescriptionData
 		{
@@ -38,11 +41,23 @@ namespace EEBUS.KeyValues
 				DeviceConfigurationKeyValueDataType data = new();
 
 				data.keyId			   = this.device.GetId( this );
-				data.value.duration	   = this.duration;
+				data.value.duration	   = this.Duration;
 				data.isValueChangeable = this.changable;
 
 				return data;
 			}
+		}
+
+		public override void SetValue( ValueType value )
+		{
+			this.Duration = value.duration;
+		}
+
+		public override void SendEvent( Connection connection )
+		{
+			LPCorLPPEvents lpcOrLpp = connection.Local.GetUseCaseEvents<LPCorLPPEvents>();
+			if ( null != lpcOrLpp )
+				lpcOrLpp.DataUpdateFailsafeDurationMinimum( 0, XmlConvert.ToTimeSpan( this.Duration ) );
 		}
 	}
 }

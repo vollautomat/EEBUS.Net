@@ -8,14 +8,28 @@
 
 		public abstract class Class
 		{
-			public virtual async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
+			public virtual SpineCmdPayloadBase CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
 				return null;
 			}
 
-			public virtual SpineCmdPayloadBase CreateNotify()
+			public virtual SpineCmdPayloadBase CreateNotify( Connection connection )
 			{
 				return null;
+			}
+
+			public virtual SpineCmdPayloadBase CreateRead( Connection connection )
+			{
+				return null;
+			}
+
+			public virtual SpineCmdPayloadBase CreateCall( Connection connection )
+			{
+				return null;
+			}
+
+			public virtual void Evaluate( Connection connection, DatagramType datagram )
+			{
 			}
 
 			public virtual bool? GetAnswerAckRequest()

@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using EEBUS.DataStructures;
 using EEBUS.Messages;
 using EEBUS.SHIP.Messages;
+using EEBUS.UseCases.ControllableSystem;
 
 namespace EEBUS.SPINE.Commands
 {
@@ -20,7 +21,7 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdLoadControlLimitListDataType>.Class
 		{
-			public override async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
+			public override SpineCmdPayloadBase CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
 				if ( datagram.header.cmdClassifier == "read" )
 				{
@@ -37,34 +38,7 @@ namespace EEBUS.SPINE.Commands
 				}
 				else if ( datagram.header.cmdClassifier == "write" )
 				{
-					LoadControlLimitListData command  = datagram.payload.ToObject<LoadControlLimitListData>();
-					LoadControlLimitDataType received = command.cmd[0].loadControlLimitListData.loadControlLimitData[0];
-
-					LoadControlLimitDataStructure data = connection.Local.GetDataStructure<LoadControlLimitDataStructure>( received.limitId );
-
-					data.LimitActive = received.isLimitActive;
-					data.Number		 = received.value.number;
-					data.EndTime	 = received.timePeriod.endTime;
-
-					bool	 active	  = received.isLimitActive;
-					TimeSpan timeSpan = XmlConvert.ToTimeSpan( received.timePeriod.endTime );
-					long	 value	  = received.value.number;
-
-					Debug.WriteLine( "----------- Limit received -----------" );
-					Debug.WriteLine( "Limit active:   " + active );
-					Debug.WriteLine( "Limit duration: " + timeSpan );
-					Debug.WriteLine( "Limit value:    " + value );
-					Debug.WriteLine( "--------------------------------------" );
-
-					SpineDatagramPayload notify = CreateNotifyMessage( datagram, header.msgCounter );
-
-					DataMessage limitMessage = new DataMessage();
-					limitMessage.SetPayload( JObject.FromObject( notify ) );
-
-					await limitMessage.Send( connection.WebSocket ).ConfigureAwait( false );
-
-					header.msgCounter = DataMessage.NextCount;
-					return new ResultData();
+					return new ResultData();	// Alternative: send Error 7 and a text message
 				}
 				else
 				{
@@ -72,31 +46,48 @@ namespace EEBUS.SPINE.Commands
 				}
 			}
 
-			public SpineDatagramPayload CreateNotifyMessage( DatagramType datagram, ulong msgCounter )
+			public override void Evaluate( Connection connection, DatagramType datagram )
 			{
+				if ( datagram.header.cmdClassifier != "write" )
+					return;
+
 				LoadControlLimitListData command  = datagram.payload.ToObject<LoadControlLimitListData>();
 				LoadControlLimitDataType received = command.cmd[0].loadControlLimitListData.loadControlLimitData[0];
 
+				LoadControlLimitDataStructure data = connection.Local.GetDataStructure<LoadControlLimitDataStructure>( received.limitId );
+
+				data.LimitActive = received.isLimitActive;
+				data.Number		 = received.value.number;
+				data.EndTime	 = received.timePeriod.endTime;
+
+				data.SendEvent( connection );
+
+				SendNotify( connection, datagram );
+			}
+
+			private void SendNotify( Connection connection, DatagramType datagram )
+			{
 				SpineDatagramPayload notify = new SpineDatagramPayload();
 				notify.datagram.header.addressSource	  = datagram.header.addressDestination;
 				notify.datagram.header.addressDestination = datagram.header.addressSource;
-				notify.datagram.header.msgCounter		  = msgCounter;
+				notify.datagram.header.msgCounter		  = DataMessage.NextCount;
 				notify.datagram.header.cmdClassifier	  = "notify";
 
 				LoadControlLimitListData	 limitData = new LoadControlLimitListData();
 				LoadControlLimitListDataType data	   = limitData.cmd[0].loadControlLimitListData;
 
-				data.loadControlLimitData = [new()];
-				data.loadControlLimitData[0].limitId			= received.limitId;
-				data.loadControlLimitData[0].isLimitChangeable	= true;
-				data.loadControlLimitData[0].isLimitActive		= received.isLimitActive;
-				data.loadControlLimitData[0].timePeriod.endTime	= received.timePeriod.endTime;
-				data.loadControlLimitData[0].value.number		= received.value.number;
-				data.loadControlLimitData[0].value.scale		= received.value.scale;
+				List<LoadControlLimitDataType> datas = new();
+				foreach (LoadControlLimitDataStructure structure in connection.Local.GetDataStructures<LoadControlLimitDataStructure>())
+					datas.Add(structure.Data);
+
+				data.loadControlLimitData = datas.ToArray();
 
 				notify.datagram.payload = JObject.FromObject( limitData );
 
-				return notify;
+				DataMessage limitMessage = new DataMessage();
+				limitMessage.SetPayload( JObject.FromObject( notify ) );
+
+				connection.PushDataMessage( limitMessage );
 			}
 		}
 	}

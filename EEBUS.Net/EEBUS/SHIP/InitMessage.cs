@@ -41,7 +41,7 @@ namespace EEBUS.SHIP.Messages
 
 		public override async Task<(Connection.EState, Connection.ESubState)> NextServerState( Connection connection )
 		{
-			if ( connection.State == Connection.EState.Unconnected || connection.State == Connection.EState.Connected )
+			if ( connection.State == Connection.EState.Disconnected || connection.State == Connection.EState.Connected )
 			{
 				await Send( connection.WebSocket ).ConfigureAwait( false );
 				return (Connection.EState.WaitingForConnectionHello, Connection.ESubState.None);
@@ -66,7 +66,7 @@ namespace EEBUS.SHIP.Messages
 
 		public override async Task<(Connection.EState, Connection.ESubState)> NextClientState( Connection connection )
 		{
-			if ( connection.State == Connection.EState.Unconnected || connection.State == Connection.EState.Connected )
+			if ( connection.State == Connection.EState.Disconnected || connection.State == Connection.EState.Connected )
 			{
 				ConnectionHelloMessage message = new ConnectionHelloMessage( ConnectionHelloPhaseType.ready, 60000 );
 				await message.Send( connection.WebSocket ).ConfigureAwait( false );

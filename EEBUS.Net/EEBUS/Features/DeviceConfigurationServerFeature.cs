@@ -1,4 +1,5 @@
 ﻿using EEBUS.Models;
+using EEBUS.SPINE.Commands;
 
 namespace EEBUS.Features
 {
@@ -16,11 +17,21 @@ namespace EEBUS.Features
 			this.Functions.Add( new Function( "deviceConfigurationKeyValueListData",			true, true ) );
 		}
 
+		public DeviceConfigurationServerFeature( int index, Entity owner, FeatureInformationType featureInfo )
+			: base( index, "DeviceClassification", "server", owner, featureInfo )
+		{
+		}
+
 		public new class Class : Feature.Class
 		{
 			public override Feature Create( int index, Entity owner )
 			{
 				return new DeviceConfigurationServerFeature( index, owner );
+			}
+
+			public override Feature Create( int index, Entity owner, FeatureInformationType featureInfo )
+			{
+				return new DeviceConfigurationServerFeature( index, owner, featureInfo  );
 			}
 		}
 

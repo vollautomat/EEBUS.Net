@@ -1,4 +1,5 @@
 ﻿using EEBUS.Models;
+using EEBUS.SPINE.Commands;
 
 namespace EEBUS.Entities
 {
@@ -16,11 +17,21 @@ namespace EEBUS.Entities
 			Features.Add( Feature.Create( 1, "DeviceClassification", "server", this ) );
 		}
 
+		public DeviceInformationEntity( int index, LocalDevice local, EntityInformationType entityInfo, FeatureInformationType[] featureInfos )
+			: base( index, local, entityInfo, featureInfos )
+		{
+		}
+
 		public new class Class : Entity.Class
 		{
 			public override Entity Create( int index, LocalDevice local, EntitySettings entitySettings )
 			{
 				return new DeviceInformationEntity( index, local, entitySettings );
+			}
+
+			public override Entity Create( int index, LocalDevice local, EntityInformationType entityInfo, FeatureInformationType[] featureInfos )
+			{
+				return new DeviceInformationEntity( index, local, entityInfo, featureInfos );
 			}
 		}
 	}

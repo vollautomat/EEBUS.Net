@@ -1,26 +1,25 @@
 ﻿using System.Xml;
-
 using EEBUS.DataStructures;
 using EEBUS.KeyValues;
 using EEBUS.Models;
 using EEBUS.SPINE.Commands;
 
-namespace EEBUS.UseCases
+namespace EEBUS.UseCases.ControllableSystem
 {
-	public class LimitOfPowerConsumptionAsControllableSystem : UseCase
+	public class LimitationOfPowerConsumption : UseCase
 	{
-		static LimitOfPowerConsumptionAsControllableSystem()
+		static LimitationOfPowerConsumption()
 		{
 			Register( "limitationOfPowerConsumption-ControllableSystem", new Class() );
 		}
 
-		public LimitOfPowerConsumptionAsControllableSystem( UseCaseSettings usecaseSettings, Entity entity )
+		public LimitationOfPowerConsumption( UseCaseSettings usecaseSettings, Entity entity )
 			: base( usecaseSettings, entity )
 		{
-			this.Scenarios.Add( new Scenario( 1, true, "Control active power consumption limit" ) );
-			this.Scenarios.Add( new Scenario( 2, true, "Failsafe values" ) );
-			this.Scenarios.Add( new Scenario( 3, true, "Heartbeat" ) );
-			this.Scenarios.Add( new Scenario( 4, true, "Constraints" ) );
+			Scenarios.Add( new Scenario( 1, true, "Control active power consumption limit" ) );
+			Scenarios.Add( new Scenario( 2, true, "Failsafe values" ) );
+			Scenarios.Add( new Scenario( 3, true, "Heartbeat" ) );
+			Scenarios.Add( new Scenario( 4, true, "Constraints" ) );
 
 			bool active			  = false;
 			long limit			  = 0;
@@ -50,7 +49,7 @@ namespace EEBUS.UseCases
 		{
 			public override UseCase Create( UseCaseSettings usecaseSettings, Entity entity )
 			{
-				return new LimitOfPowerConsumptionAsControllableSystem( usecaseSettings, entity );
+				return new LimitationOfPowerConsumption( usecaseSettings, entity );
 			}
 		}
 
@@ -61,7 +60,7 @@ namespace EEBUS.UseCases
 			get
 			{
 				List<uint> scenarios = new();
-				foreach ( var scenario in this.Scenarios )
+				foreach ( var scenario in Scenarios )
 					scenarios.Add( scenario.Index );
 
 				UseCaseSupportType support = new();

@@ -68,8 +68,17 @@ namespace EEBUS.SHIP.Messages
 			{
 				if ( this.data.payload.ContainsKey( "datagram" ) )
 				{
-					SpineDatagramPayload datagram = this.data.payload.ToObject<SpineDatagramPayload>();
-					SpineDatagramPayload answer   = await datagram.CreateAnswer( NextCount, this.connection );
+					SpineDatagramPayload payload	   = this.data.payload.ToObject<SpineDatagramPayload>();
+					string				 cmdClassifier = payload.datagram.header.cmdClassifier;
+
+					payload.Evaluate( connection );
+
+					if ( cmdClassifier == "reply" || cmdClassifier == "notify" )
+					{
+						return (connection.State, connection.SubState);
+					}
+					
+					SpineDatagramPayload answer = payload.CreateAnswer( NextCount, this.connection );
 
 					if ( null != answer )
 					{

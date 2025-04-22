@@ -14,12 +14,18 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdNodeManagementSubscriptionRequestCallType>.Class
 		{
-			public override async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
+			public override SpineCmdPayloadBase CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
 				ResultData payload = new ResultData();
 
 				return payload;
 			}
+
+			public override SpineCmdPayloadBase CreateCall( Connection connection )
+			{
+				return new NodeManagementSubscriptionRequestCall();
+			}
+
 		}
 	}
 
@@ -43,16 +49,5 @@ namespace EEBUS.SPINE.Commands
 		public AddressType serverAddress	 { get; set; }
 
 		public string	   serverFeatureType { get; set; }
-	}
-
-	[System.SerializableAttribute()]
-	public class AddressType
-	{
-		public string device  { get; set; }
-
-		public int[]  entity  { get; set; }
-
-		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-		public string feature { get; set; }
 	}
 }

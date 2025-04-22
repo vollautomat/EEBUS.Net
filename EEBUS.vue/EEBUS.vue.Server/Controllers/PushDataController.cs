@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
 using EEBUS.Models;
+using EEBUS.UseCases.ControllableSystem;
+using System.Collections.Generic;
 
 namespace EEBUS.Controllers
 {
@@ -17,11 +19,14 @@ namespace EEBUS.Controllers
 		public PushDataController( Devices devices )
 		{
 			this.devices = devices;
-			//this.timer = new Timer( PushTimer, null, 3000, 3000 );
 
 			this.devices.RemoteDeviceFound  += OnRemoteDeviceFound;
 			this.devices.ServerStateChanged += OnServerStateChanged;
 			this.devices.ClientStateChanged += OnClientStateChanged;
+
+			this.devices.Local.AddUseCaseEvents( this.lpcEventHandler );
+			this.devices.Local.AddUseCaseEvents( this.lppEventHandler );
+			this.devices.Local.AddUseCaseEvents( this.lpcOrLppEventHandler );
 		}
 
 		public void Dispose()
@@ -29,12 +34,57 @@ namespace EEBUS.Controllers
 			this.devices.RemoteDeviceFound  -= OnRemoteDeviceFound;
 			this.devices.ServerStateChanged -= OnServerStateChanged;
 			this.devices.ClientStateChanged -= OnClientStateChanged;
+
+			this.devices.Local.RemoveUseCaseEvents( this.lpcEventHandler );
+			this.devices.Local.RemoveUseCaseEvents( this.lppEventHandler );
+			this.devices.Local.RemoveUseCaseEvents( this.lpcOrLppEventHandler );
 		}
 
 		static private List<WebSocket> webSockets = new List<WebSocket>();
-		//private Timer timer;
 
-		private Devices devices;
+		private Devices				 devices;
+		private LPCEventHandler		 lpcEventHandler	  = new();
+		private LPPEventHandler		 lppEventHandler	  = new();
+		private LPCorLPPEventHandler lpcOrLppEventHandler = new();
+
+		private class LPCEventHandler : LPCEvents
+		{
+			public void DataUpdateLimit( int counter, bool active, long limit, TimeSpan duration )
+			{
+				using var _ = Push( new LimitDataChanged( true, active, limit, duration ) );
+			}
+
+			public void DataUpdateFailsafeConsumptionActivePowerLimit( int counter, long limit )
+			{
+				using var _ = Push( new FailsafeLimitDataChanged( true, limit ) );
+			}
+		}
+
+		private class LPPEventHandler : LPPEvents
+		{
+			public void DataUpdateLimit( int counter, bool active, long limit, TimeSpan duration )
+			{
+				using var _ = Push( new LimitDataChanged( false, active, limit, duration ) );
+			}
+
+			public void DataUpdateFailsafeProductionActivePowerLimit( int counter, long limit  )
+			{
+				using var _ = Push( new FailsafeLimitDataChanged( false, limit ) );
+			}
+		}
+
+		private class LPCorLPPEventHandler : LPCorLPPEvents
+		{
+			public void DataUpdateFailsafeDurationMinimum( int counter, TimeSpan duration )
+			{
+				using var _ = Push( new FailsafeLimitDurationChanged( duration ) );
+			}
+
+			public void DataUpdateHeartbeat( int counter, RemoteDevice device, uint timeout )
+			{
+				using var _ = Push( new HeartbeatReceived( device, timeout ) );
+			}
+		}
 
 		private void OnRemoteDeviceFound( RemoteDevice device )
 		{
@@ -50,12 +100,6 @@ namespace EEBUS.Controllers
 		{
 			using var _ = Push( new ClientStateChanged( device, state ) );
 		}
-
-		//private async void PushTimer( object? state )
-		//{
-		//	JObject test = JObject.FromObject( new { msg = "hello", status = "ok" } );
-		//	await Push( test );
-		//}
 
 		static public bool HasListeners()
 		{

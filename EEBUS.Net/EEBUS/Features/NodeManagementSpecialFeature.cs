@@ -1,4 +1,5 @@
 ﻿using EEBUS.Models;
+using EEBUS.SPINE.Commands;
 
 namespace EEBUS.Features
 {
@@ -23,11 +24,21 @@ namespace EEBUS.Features
 			this.Functions.Add( new Function( "nodeManagementBindingRequestCall",	   false, false ) );
 		}
 
+		public NodeManagementSpecialFeature( int index, Entity owner, FeatureInformationType featureInfo )
+			: base( index, "NodeManagement", "special", owner, featureInfo )
+		{
+		}
+
 		public new class Class : Feature.Class
 		{
 			public override Feature Create( int index, Entity owner )
 			{
 				return new NodeManagementSpecialFeature( index, owner );
+			}
+
+			public override Feature Create( int index, Entity owner, FeatureInformationType featureInfo )
+			{
+				return new NodeManagementSpecialFeature( index, owner, featureInfo  );
 			}
 		}
 	}

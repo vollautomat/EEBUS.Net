@@ -15,13 +15,14 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdNodeManagementDetailedDiscoveryDataType>.Class
 		{
-			public override async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
+			public override SpineCmdPayloadBase CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
 				NodeManagementDetailedDiscoveryData		payload = new NodeManagementDetailedDiscoveryData();
 				NodeManagementDetailedDiscoveryDataType data	= payload.cmd[0].nodeManagementDetailedDiscoveryData;
 
-				data.deviceInformation = connection.Local.DeviceInformation;
-				data.entityInformation = connection.Local.EntityInformations;
+				data.specificationVersionList = new();
+				data.deviceInformation		  = connection.Local.DeviceInformation;
+				data.entityInformation		  = connection.Local.EntityInformations;
 
 				List<FeatureInformationType> features = new();
 				foreach ( Entity entity in connection.Local.Entities )
@@ -30,7 +31,22 @@ namespace EEBUS.SPINE.Commands
 
 				data.featureInformation = features.ToArray();
 
-				return payload;
+				return payload;		
+			}
+
+			public override SpineCmdPayloadBase CreateRead( Connection connection )
+			{
+				return new NodeManagementDetailedDiscoveryData();
+			}
+
+			public override void Evaluate( Connection connection, DatagramType datagram )
+			{
+				if ( datagram.header.cmdClassifier != "reply" )
+					return;
+
+				NodeManagementDetailedDiscoveryData payload = datagram.payload.ToObject<NodeManagementDetailedDiscoveryData>();
+
+				connection.Remote.SetDiscoveryData( payload, connection );
 			}
 		}
 	}
@@ -44,12 +60,16 @@ namespace EEBUS.SPINE.Commands
 	[System.SerializableAttribute()]
 	public class NodeManagementDetailedDiscoveryDataType
 	{
-		public SpecificationVersionListType specificationVersionList { get; set; } = new();
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		public SpecificationVersionListType specificationVersionList { get; set; }
 
-		public DeviceInformationType		deviceInformation		 { get; set; } = new();
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		public DeviceInformationType		deviceInformation		 { get; set; }
 
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public EntityInformationType[]		entityInformation		 { get; set; }
 
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public FeatureInformationType[]		featureInformation		 { get; set; }
 	}
 

@@ -1,4 +1,5 @@
 ﻿using EEBUS.Models;
+using EEBUS.SPINE.Commands;
 
 namespace EEBUS.Features
 {
@@ -15,11 +16,21 @@ namespace EEBUS.Features
 			this.Functions.Add( new Function( "deviceDiagnosisHeartbeatData", true, false ) );
 		}
 
+		public DeviceDiagnosisServerFeature( int index, Entity owner, FeatureInformationType featureInfo )
+			: base( index, "DeviceDiagnosis", "server", owner, featureInfo )
+		{
+		}
+
 		public new class Class : Feature.Class
 		{
 			public override Feature Create( int index, Entity owner )
 			{
 				return new DeviceDiagnosisServerFeature( index, owner );
+			}
+
+			public override Feature Create( int index, Entity owner, FeatureInformationType featureInfo )
+			{
+				return new DeviceDiagnosisServerFeature( index, owner, featureInfo  );
 			}
 		}
 

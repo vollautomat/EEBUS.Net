@@ -1,5 +1,8 @@
 ﻿using EEBUS.Models;
 using EEBUS.SPINE.Commands;
+using EEBUS.UseCases.ControllableSystem;
+using System.Xml;
+using ValueType = EEBUS.SPINE.Commands.ValueType;
 
 namespace EEBUS.KeyValues
 {
@@ -8,8 +11,8 @@ namespace EEBUS.KeyValues
 		public FailsafeConsumptionActivePowerLimitKeyValue( Device device, long value, short scale, bool changable )
 			: base( device )
 		{
-			this.value	   = value;
-			this.scale	   = scale;
+			this.Value	   = value;
+			this.Scale	   = scale;
 			this.changable = changable;
 		}
 
@@ -17,8 +20,9 @@ namespace EEBUS.KeyValues
 		public override string Type	   { get { return "scaledNumber"; } }
 		public string		   Unit	   { get { return "W"; } }
 
-		private long		   value;
-		private short		   scale;
+		public long			   Value   { get; set; }
+		public short		   Scale   { get; set; }
+
 		private bool		   changable;
 
 		public override DeviceConfigurationKeyValueDescriptionDataType DescriptionData
@@ -44,12 +48,24 @@ namespace EEBUS.KeyValues
 
 				data.keyId					   = this.device.GetId( this );
 				data.value.scaledNumber		   = new();
-				data.value.scaledNumber.number = this.value;
-				data.value.scaledNumber.scale  = this.scale;
+				data.value.scaledNumber.number = this.Value;
+				data.value.scaledNumber.scale  = this.Scale;
 				data.isValueChangeable		   = this.changable;
 
 				return data;
 			}
+		}
+
+		public override void SetValue( ValueType value )
+		{
+			this.Value = value.scaledNumber.number;
+		}
+
+		public override void SendEvent( Connection connection )
+		{
+			LPCEvents lpc = connection.Local.GetUseCaseEvents<LPCEvents>();
+			if ( null != lpc )
+				lpc.DataUpdateFailsafeConsumptionActivePowerLimit( 0, this.Value );
 		}
 	}
 }

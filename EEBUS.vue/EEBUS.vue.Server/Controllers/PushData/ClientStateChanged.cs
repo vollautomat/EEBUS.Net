@@ -10,6 +10,7 @@ namespace EEBUS.Controllers
 			AddData( new
 			{
 				id	  = device.Id,
+				ski	  = device.SKI,
 				state = state.ToString()
 			} );
 		}

@@ -22,7 +22,7 @@ namespace EEBUS.SHIP.Messages
 
 		public AccessMethodsType accessMethods { get; set; } = new();
 
-		public override string GetDeviceId()
+		public override string GetId()
 		{
 			return this.accessMethods.id;
 		}

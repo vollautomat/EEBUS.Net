@@ -1,8 +1,46 @@
-﻿namespace EEBUS
+﻿using EEBUS.UseCases.ControllableSystem;
+
+namespace EEBUS
 {
 	public class Settings
 	{
 		public DeviceSettings Device      { get; set; }
+
+		public long GetConsumptionNominalMax()
+		{
+			try
+			{
+				foreach ( var entity in Device.Entities )
+				{
+					var usecase = entity.UseCases.FirstOrDefault( uc => uc.Type == "limitationOfPowerConsumption" && uc.Actor == "ControllableSystem" );
+					if ( null != usecase )
+						return usecase.InitLimits.NominalMax;
+				}
+			}
+			catch
+			{
+			}
+
+			return 0;
+		}
+
+		public long GetProductionNominalMax()
+		{
+			try
+			{
+				foreach ( var entity in Device.Entities )
+				{
+					var usecase = entity.UseCases.FirstOrDefault( uc => uc.Type == "limitationOfPowerProduction" && uc.Actor == "ControllableSystem" );
+					if ( null != usecase )
+						return usecase.InitLimits.NominalMax;
+				}
+			}
+			catch
+			{
+			}
+
+			return 0;
+		}
 	}
 
 	public class DeviceSettings

@@ -35,7 +35,7 @@
 			}
 		}
 
-		public RemoteDevice GetOrCreateRemote( string id, string ski, string url )
+		public RemoteDevice GetOrCreateRemote( string id, string ski, string url, string name )
 		{
 			if ( null != Local && Local.SKI == new SKI( ski ) )
 				return null;
@@ -49,7 +49,7 @@
 
 				if ( null == remote )
 				{
-					remote = new RemoteDevice( id, ski, url, FireServerStateChanged, FireClientStateChanged );
+					remote = new RemoteDevice( id, ski, url, name, FireServerStateChanged, FireClientStateChanged );
 					Remote.Add( remote );
 					foundNew = true;
 				}

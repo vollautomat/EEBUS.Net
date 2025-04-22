@@ -18,7 +18,7 @@ namespace EEBUS.Messages
 
 		protected Connection connection;
 
-		public virtual string GetDeviceId()
+		public virtual string GetId()
 		{
 			return null;
 		}

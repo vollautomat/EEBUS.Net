@@ -1,6 +1,6 @@
 ﻿using System.Net.WebSockets;
 
-namespace EEBUS.EEBUS
+namespace EEBUS
 {
 	public class EEBusWebSocket
 	{

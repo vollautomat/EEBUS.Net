@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 
 using EEBUS.Messages;
+using EEBUS.Models;
 
 namespace EEBUS.SPINE.Commands
 {
@@ -13,18 +14,46 @@ namespace EEBUS.SPINE.Commands
 
 		public new class Class : SpineCmdPayload<CmdDeviceConfigurationKeyValueListDataType>.Class
 		{
-			public override async Task<SpineCmdPayloadBase> CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
+			public override SpineCmdPayloadBase CreateAnswer( DatagramType datagram, HeaderType header, Connection connection )
 			{
-				DeviceConfigurationKeyValueListData	    payload = new DeviceConfigurationKeyValueListData();
-				DeviceConfigurationKeyValueListDataType data	= payload.cmd[0].deviceConfigurationKeyValueListData;
+				if ( datagram.header.cmdClassifier == "read" )
+				{
+					DeviceConfigurationKeyValueListData	    payload = new DeviceConfigurationKeyValueListData();
+					DeviceConfigurationKeyValueListDataType data	= payload.cmd[0].deviceConfigurationKeyValueListData;
 
-				List<DeviceConfigurationKeyValueDataType> datas = new();
-				foreach ( var keyValue in connection.Local.KeyValues )
-					datas.Add( keyValue.Data);
+					List<DeviceConfigurationKeyValueDataType> datas = new();
+					foreach ( var keyValue in connection.Local.KeyValues )
+						datas.Add( keyValue.Data );
 
-				data.deviceConfigurationKeyValueData = datas.ToArray();
+					data.deviceConfigurationKeyValueData = datas.ToArray();
 
-				return payload;
+					return payload;
+				}
+				else if ( datagram.header.cmdClassifier == "write" )
+				{
+					return new ResultData();
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			public override void Evaluate( Connection connection, DatagramType datagram )
+			{
+				if ( datagram.header.cmdClassifier != "write" )
+					return;
+
+				DeviceConfigurationKeyValueListData payload = datagram.payload.ToObject<DeviceConfigurationKeyValueListData>();
+
+				int		  keyId = payload.cmd[0].deviceConfigurationKeyValueListData.deviceConfigurationKeyValueData[0].keyId;
+				ValueType value = payload.cmd[0].deviceConfigurationKeyValueListData.deviceConfigurationKeyValueData[0].value;
+
+				KeyValue keyValue = connection.Local.KeyValues.FirstOrDefault( kv => kv.Data.keyId == keyId );
+				if ( null != keyValue )
+					keyValue.SetValue( value );
+
+				keyValue.SendEvent( connection );
 			}
 		}
 	}

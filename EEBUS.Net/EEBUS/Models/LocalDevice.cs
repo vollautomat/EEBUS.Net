@@ -19,6 +19,8 @@ namespace EEBUS.Models
 			{
 				this.Entities.Add( Entity.Create( index++, this, entitySettings ) );
 			}
+
+			this.settings = settings;
 		}
 
 		public string Brand				{ get; private set; }
@@ -31,6 +33,9 @@ namespace EEBUS.Models
 
 		public string NetworkFeatureSet { get; private set; }
 
+
+		private readonly Settings settings;
+		
 		public string ShipID
 		{
 			get
@@ -46,7 +51,7 @@ namespace EEBUS.Models
 			{
 				DeviceInformationType info = new();
 
-				info.description.deviceAddress.device = this.Id;
+				info.description.deviceAddress.device = this.DeviceId;
 				info.description.deviceType			  = this.Type;
 				info.description.networkFeatureSet	  = this.NetworkFeatureSet;
 
@@ -65,7 +70,7 @@ namespace EEBUS.Models
 				{
 					EntityInformationType info = new();
 
-					info.description.entityAddress.device = this.Id;
+					info.description.entityAddress.device = this.DeviceId;
 					info.description.entityAddress.entity = [index++];
 					info.description.entityType			  = entity.Type;
 
@@ -74,6 +79,11 @@ namespace EEBUS.Models
 
 				return infos.ToArray();
 			}
+		}
+
+		public Settings GetSettings()
+		{
+			return this.settings;
 		}
 	}
 }

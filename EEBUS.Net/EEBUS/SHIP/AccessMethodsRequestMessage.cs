@@ -38,7 +38,7 @@ namespace EEBUS.SHIP.Messages
 		{
 			if ( connection.State == Connection.EState.WaitingForAccessMethodsRequest )
 			{
-				AccessMethodsMessage method = new AccessMethodsMessage( connection.Local.Id );
+				AccessMethodsMessage method = new AccessMethodsMessage( connection.Local.DeviceId );
 				await method.Send( connection.WebSocket ).ConfigureAwait( false );
 
 				return (Connection.EState.WaitingForAccessMethods, Connection.ESubState.None);
