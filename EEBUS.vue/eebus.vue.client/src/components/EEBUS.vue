@@ -262,7 +262,7 @@
 				this.local.heartbeat		= true;
 				this.local.heartbeatTimeout	= data.timeout;
 
-				setTimeout( () => this.local.heartbeat = false, 1000 );
+				setTimeout( () => this.local!.heartbeat = false, 1000 );
 			}
 		}
 	}

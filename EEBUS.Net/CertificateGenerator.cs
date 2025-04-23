@@ -8,7 +8,8 @@ namespace EEBUS
 	{
 		public static X509Certificate2 GenerateCert( string subject )
 		{
-			string path		= Path.Combine( Directory.GetCurrentDirectory(), subject + ".pfx" );
+			string dir		= Directory.GetParent( Directory.GetCurrentDirectory() )?.FullName;
+			string path		= Path.Combine( dir, subject + ".pfx" );
 			string password = Environment.GetEnvironmentVariable( "PFX_PASSWORD" ) ?? string.Empty;
 
 			// check if we have a persisted cert already
@@ -21,7 +22,7 @@ namespace EEBUS
 			{
 				try
 				{
-					string rootPath = Path.Combine( Directory.GetCurrentDirectory(), subject + ".pkcs12" );
+					string rootPath = Path.Combine( dir, subject + ".pkcs12" );
 					X509Certificate2 rootCertificate;
 					if ( File.Exists( rootPath ) )
 					{
@@ -74,8 +75,8 @@ namespace EEBUS
 						// persist the cert
 						File.WriteAllBytes( path, cert.Export( X509ContentType.Pfx, password ) );
 
-						ExtractCertFile( cert, subject );	// needed by the vue frontend
-						ExtractKeyFile( cert, subject );
+						ExtractCertFile( cert, dir, subject );	// needed by the vue frontend
+						ExtractKeyFile( cert, dir, subject );
 
 						return cert;
 					}
@@ -114,9 +115,9 @@ namespace EEBUS
 			}
 		}
 
-		private static void ExtractCertFile( X509Certificate2 certificate, string subject )
+		private static void ExtractCertFile( X509Certificate2 certificate, string dir, string subject )
 		{
-			string pemPath = Path.Combine( Directory.GetCurrentDirectory(), subject + ".pem" );
+			string pemPath = Path.Combine( dir, subject + ".pem" );
 
 			// Speichern des Zertifikats (Public Key)
 			var publicKeyPem = "-----BEGIN CERTIFICATE-----\n" +
@@ -125,9 +126,9 @@ namespace EEBUS
 				File.WriteAllText( pemPath, publicKeyPem );
 		}
 
-		private static void ExtractKeyFile( X509Certificate2 certificate, string subject )
+		private static void ExtractKeyFile( X509Certificate2 certificate, string dir, string subject )
 		{
-			string keyPath = Path.Combine( Directory.GetCurrentDirectory(), subject + ".key" );
+			string keyPath = Path.Combine( dir, subject + ".key" );
 
 			// Speichern des privaten Schlüssels
 			var ecdsa = certificate.GetECDsaPrivateKey();

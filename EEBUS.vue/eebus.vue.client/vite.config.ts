@@ -12,11 +12,11 @@ const baseFolder =
         ? `${env.APPDATA}/ASP.NET/https`
         : `${env.HOME}/.aspnet/https`;
 
-const certificateName = "eebus.vue.client";
+const certificateName = "EEBUS.net";
 //const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
 //const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
-const certFilePath = 'Win11Aliud.pem';
-const keyFilePath = 'Win11Aliud.key';
+const certFilePath = path.join('..', `${certificateName}.pem`);
+const keyFilePath = path.join('..', `${certificateName}.key`);
 
 if (!fs.existsSync(baseFolder)) {
     fs.mkdirSync(baseFolder, { recursive: true });

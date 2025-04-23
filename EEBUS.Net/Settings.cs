@@ -4,6 +4,7 @@ namespace EEBUS
 {
 	public class Settings
 	{
+		public string		  Certificate { get; set; }
 		public DeviceSettings Device      { get; set; }
 
 		public long GetConsumptionNominalMax()

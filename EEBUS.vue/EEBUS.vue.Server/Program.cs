@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 
 using EEBUS.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace EEBUS.vue.Server
 {
@@ -21,12 +22,13 @@ namespace EEBUS.vue.Server
 			// Add services to the container.
 
 			var services = builder.Services;
+			var settings = builder.Configuration.GetSection( "Settings" );
 
 			services.Configure<KestrelServerOptions>( kestrelOptions =>
 			{
 				kestrelOptions.ConfigureHttpsDefaults( httpOptions =>
 				{
-					httpOptions.ServerCertificate			= CertificateGenerator.GenerateCert( Dns.GetHostName() );
+					httpOptions.ServerCertificate			= CertificateGenerator.GenerateCert( settings.Get<Settings>()?.Certificate );
 					httpOptions.ClientCertificateMode		= ClientCertificateMode.NoCertificate;
 					httpOptions.ClientCertificateValidation	= ValidateClientCert;
 					httpOptions.SslProtocols				= SslProtocols.Tls12;
@@ -36,8 +38,6 @@ namespace EEBUS.vue.Server
 					};
 				} );
 			} );
-
-			var settings = builder.Configuration.GetSection( "Settings" );
 
 			services.AddCors( options =>
 			{
