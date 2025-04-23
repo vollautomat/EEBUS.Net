@@ -62,8 +62,6 @@ namespace EEBUS.vue.Server
 			services.AddSingleton<MDNSClient>( mDNSClient );
 			services.AddSingleton<MDNSService>( mDNSService );
 
-			//services.AddHostedService<DevicesHost>();
-
 			var app = builder.Build();
 
 			app.UseDefaultFiles();
