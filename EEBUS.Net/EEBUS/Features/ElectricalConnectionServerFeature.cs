@@ -13,7 +13,12 @@ namespace EEBUS.Features
 		public ElectricalConnectionServerFeature( int index, Entity owner )
 			: base( index, "ElectricalConnection", "server", owner )
 		{
-			this.Functions.Add( new Function( "electricalConnectionCharacteristicListData", true, false ) );
+			// LPC, LPP, MGCP
+			this.Functions.Add( new Function( "electricalConnectionCharacteristicListData",		  true, false ) );
+
+			// MGCP
+			this.Functions.Add( new Function( "electricalConnectionDescriptionListData",		  true, false ) );
+			this.Functions.Add( new Function( "electricalConnectionParameterDescriptionListData", true, false ) );
 		}
 
 		public ElectricalConnectionServerFeature( int index, Entity owner, FeatureInformationType featureInfo )

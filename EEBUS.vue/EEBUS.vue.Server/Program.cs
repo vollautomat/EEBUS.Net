@@ -105,6 +105,9 @@ namespace EEBUS.vue.Server
 			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.UseCases.ControllableSystem" ) )
 				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
 
+			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.UseCases.GridConnectionPoint" ) )
+				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
+
 			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.Features" ) )
 				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
 
