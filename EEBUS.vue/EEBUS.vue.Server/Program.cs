@@ -93,23 +93,13 @@ namespace EEBUS.vue.Server
 
 			app.UseMiddleware<SHIPMiddleware>();
 
-			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.SHIP.Messages" ) )
-				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
-
-			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.SPINE.Commands" ) )
-				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
-
-			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.Entities" ) )
-				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
-
-			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.UseCases.ControllableSystem" ) )
-				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
-
-			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.UseCases.GridConnectionPoint" ) )
-				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
-
-			foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, "EEBUS.Features" ) )
-				RuntimeHelpers.RunClassConstructor( type.TypeHandle );
+			foreach ( string ns in new string[] {"EEBUS.SHIP.Messages", "EEBUS.SPINE.Commands", "EEBUS.Entities",
+												 "EEBUS.UseCases.ControllableSystem", "EEBUS.UseCases.GridConnectionPoint",
+												 "EEBUS.Features" } )
+			{
+				foreach ( Type type in GetTypesInNamespace( typeof( Settings ).Assembly, ns ) )
+					RuntimeHelpers.RunClassConstructor( type.TypeHandle );
+			}
 
 			// start our mDNS services
 			mDNSClient.Run( devices );

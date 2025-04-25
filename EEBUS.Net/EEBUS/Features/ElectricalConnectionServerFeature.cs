@@ -10,8 +10,8 @@ namespace EEBUS.Features
 			Register( "ElectricalConnection-server", new Class() );
 		}
 
-		public ElectricalConnectionServerFeature( int index, Entity owner )
-			: base( index, "ElectricalConnection", "server", owner )
+		public ElectricalConnectionServerFeature( Entity owner )
+			: base( "ElectricalConnection", "server", owner )
 		{
 			// LPC, LPP, MGCP
 			this.Functions.Add( new Function( "electricalConnectionCharacteristicListData",		  true, false ) );
@@ -28,9 +28,9 @@ namespace EEBUS.Features
 
 		public new class Class : Feature.Class
 		{
-			public override Feature Create( int index, Entity owner )
+			public override Feature Create( Entity owner )
 			{
-				return new ElectricalConnectionServerFeature( index, owner );
+				return new ElectricalConnectionServerFeature( owner );
 			}
 
 			public override Feature Create( int index, Entity owner, FeatureInformationType featureInfo )

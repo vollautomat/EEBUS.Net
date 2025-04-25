@@ -10,8 +10,8 @@ namespace EEBUS.Features
 			Register( "Measurement-server", new Class() );
 		}
 
-		public MeasurementServerFeature( int index, Entity owner )
-			: base( index, "Measurement", "server", owner )
+		public MeasurementServerFeature( Entity owner )
+			: base( "Measurement", "server", owner )
 		{
 			this.Functions.Add( new Function( "measurementDescriptionListData",	true, false ) );
 			this.Functions.Add( new Function( "measurementListData",			true, false ) );
@@ -24,9 +24,9 @@ namespace EEBUS.Features
 
 		public new class Class : Feature.Class
 		{
-			public override Feature Create( int index, Entity owner )
+			public override Feature Create( Entity owner )
 			{
-				return new MeasurementServerFeature( index, owner );
+				return new MeasurementServerFeature( owner );
 			}
 
 			public override Feature Create( int index, Entity owner, FeatureInformationType featureInfo )
@@ -42,5 +42,7 @@ namespace EEBUS.Features
 				return "Measurement Server";
 			}
 		}
+
+		public List<MeasurementData.MeasurementData> measurementData = new();
 	}
 }

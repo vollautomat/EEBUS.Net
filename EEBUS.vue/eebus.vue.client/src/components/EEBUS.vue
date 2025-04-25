@@ -50,7 +50,7 @@
 				<p>Name</p>
 				<p>{{ remote.name }}</p>
 				<p>SKI</p>
-				<p>{{ remote.ski }}</p>
+				<p>{{ readableSKI( remote.ski ) }}</p>
 				<p>Server state</p>
 				<p>{{ remote.serverState ?? 'unknown' }}</p>
 				<p>Client state</p>
@@ -264,6 +264,21 @@
 
 				setTimeout( () => this.local!.heartbeat = false, 1000 );
 			}
+		}
+
+		public readableSKI( ski: string ): string {
+			if ( 40 < ski.length )
+				return ski;
+
+			var parts: string[] = [];
+			for ( var i = 0; i < 10; i++ )
+				parts[i] = ski.substring( 4*i, 4*i +4 );
+
+			return parts.join( ' ' );
+		}
+
+		public formatted( val: number ): string {
+			return new Intl.NumberFormat( 'en-US' ).format( val );
 		}
 	}
 
